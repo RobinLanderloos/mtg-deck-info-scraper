@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoxfieldDeckListsScraper", "MoxfieldDeckListsScraper\MoxfieldDeckListsScraper\MoxfieldDeckListsScraper.csproj", "{3AFC0706-CDE2-4B2B-8876-782A563E9E25}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MxofieldDeckListsScraper", "MxofieldDeckListsScraper\MxofieldDeckListsScraper\MxofieldDeckListsScraper.csproj", "{8F6C57B1-AB49-442C-87F8-A756379CE1FB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoxfieldDeckListsScraper.Client", "MoxfieldDeckListsScraper\MoxfieldDeckListsScraper.Client\MoxfieldDeckListsScraper.Client.csproj", "{6FCDADCA-0D83-45FB-9538-11BF989501BB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MxofieldDeckListsScraper.Client", "MxofieldDeckListsScraper\MxofieldDeckListsScraper.Client\MxofieldDeckListsScraper.Client.csproj", "{9BF7A8A7-CA13-433C-8C49-B88C9B58D97B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -10,13 +10,13 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{3AFC0706-CDE2-4B2B-8876-782A563E9E25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3AFC0706-CDE2-4B2B-8876-782A563E9E25}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3AFC0706-CDE2-4B2B-8876-782A563E9E25}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3AFC0706-CDE2-4B2B-8876-782A563E9E25}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6FCDADCA-0D83-45FB-9538-11BF989501BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6FCDADCA-0D83-45FB-9538-11BF989501BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6FCDADCA-0D83-45FB-9538-11BF989501BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6FCDADCA-0D83-45FB-9538-11BF989501BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F6C57B1-AB49-442C-87F8-A756379CE1FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F6C57B1-AB49-442C-87F8-A756379CE1FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F6C57B1-AB49-442C-87F8-A756379CE1FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F6C57B1-AB49-442C-87F8-A756379CE1FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9BF7A8A7-CA13-433C-8C49-B88C9B58D97B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9BF7A8A7-CA13-433C-8C49-B88C9B58D97B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9BF7A8A7-CA13-433C-8C49-B88C9B58D97B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9BF7A8A7-CA13-433C-8C49-B88C9B58D97B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

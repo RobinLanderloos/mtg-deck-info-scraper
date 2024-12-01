@@ -3,9 +3,9 @@ using OpenQA.Selenium.Support.UI;
 
 namespace MxofieldDeckListsScraper.scraping.Extensions;
 
-public static class WebDriverWaitExtensions
+public static class WebDriverExtensions
 {
-	public static IWebElement FindElement(this IWebDriver driver,
+	public static IWebElement WaitAndFindElement(this IWebDriver driver,
 		By by,
 		int timeoutInSeconds)
 	{
