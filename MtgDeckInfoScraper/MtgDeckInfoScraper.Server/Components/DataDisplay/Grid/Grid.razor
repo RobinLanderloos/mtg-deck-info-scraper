@@ -49,24 +49,40 @@
             SortProperties[propertyName] = false;
         }
 
+        if (!SortProperties.Any())
+        {
+            return;
+        }
+
         var modelQueryable = ModelList.AsQueryable();
 
-        foreach (var sortProperty in SortProperties)
+        var firstSort = SortProperties.First();
+        var property = typeof(TModel).GetProperty(propertyName);
+        if (property == null)
+        {
+            return;
+        }
+
+        if (firstSort.Value)
+        {
+            modelQueryable = modelQueryable.OrderBy(x => property.GetValue(x));
+        }
+        else
+        {
+            modelQueryable = modelQueryable.OrderByDescending(x => property.GetValue(x));
+        }
+
+        foreach (var sortProperty in SortProperties.Skip(1))
         {
             Console.WriteLine($"Sorting by: {sortProperty.Key} {sortProperty.Value}");
-            var property = typeof(TModel).GetProperty(propertyName);
-            if (property == null)
-            {
-                return;
-            }
 
             if (sortProperty.Value)
             {
-                modelQueryable = modelQueryable.OrderBy(x => property.GetValue(x));
+                modelQueryable = ((IOrderedQueryable<TModel>)modelQueryable).ThenBy(x => property.GetValue(x));
             }
             else
             {
-                modelQueryable = modelQueryable.OrderByDescending(x => property.GetValue(x));
+                modelQueryable = ((IOrderedQueryable<TModel>)modelQueryable).ThenByDescending(x => property.GetValue(x));
             }
         }
 

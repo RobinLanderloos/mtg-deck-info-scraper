@@ -2,6 +2,7 @@
 
 @* TODO-Potential: We could use API calls instead but this is easier for now *@
 @rendermode InteractiveServer
+@using System.Globalization
 @using MtgDeckInfoScraper.Server.scraping
 @using MtgDeckInfoScraper.Server.scraping.Moxfield
 @using MtgDeckInfoScraper.Server.Components.DataDisplay.Grid
@@ -40,7 +41,7 @@
                 <a href="@context.Url" target="_blank">@context.Title</a>
             </td>
             <td>
-                @context.Price.ToString("C")
+                @context.Price.ToString("C", new CultureInfo("en-US"))
             </td>
             <td>
                 @context.Likes.ToString()
