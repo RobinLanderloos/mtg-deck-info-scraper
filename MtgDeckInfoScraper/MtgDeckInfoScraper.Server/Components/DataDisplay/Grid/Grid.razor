@@ -4,27 +4,28 @@
     <table class="table table-auto">
         <thead>
         <tr>
-            @Headers
+            @GridHeaders
         </tr>
         </thead>
         <tbody>
         @foreach (var model in ModelList)
         {
-            <tr>
-                @Cells
-            </tr>
+            <CascadingValue Value="@model">
+                <tr>
+                    @GridRowTemplate(model)
+                </tr>
+            </CascadingValue>
         }
         </tbody>
     </table>
 </CascadingValue>
 
 @code {
-    [Parameter] public List<TModel> ModelList { get; set; } = new();
+    [Parameter] public IReadOnlyCollection<TModel> ModelList { get; set; } = default!;
+    [Parameter] public RenderFragment GridHeaders { get; set; } = null!;
+    [Parameter] public RenderFragment<TModel> GridRowTemplate { get; set; } = null!;
 
     public readonly Dictionary<string, bool> SortProperties = new();
-
-    [Parameter] public RenderFragment Headers { get; set; } = null!;
-    [Parameter] public RenderFragment Cells { get; set; } = null!;
 
     public void SortBy(string propertyName)
     {
@@ -70,6 +71,8 @@
         }
 
         ModelList = modelQueryable.ToList();
+
+        StateHasChanged();
     }
 
 }

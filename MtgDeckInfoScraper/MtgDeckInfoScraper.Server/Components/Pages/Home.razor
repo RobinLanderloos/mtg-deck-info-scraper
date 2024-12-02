@@ -27,13 +27,28 @@
 @if (_deckList.Count > 0)
 {
     <h2 class="text-2xl font-bold mb-5">Scrape Results</h2>
-    
-    <Grid TModel="DeckInfo" ModelList="_deckList">
-        <Headers>
-            <Header TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Title)" Sortable="@true"></Header>
-        </Headers>
-        <Cells>
-        </Cells>
+
+    <Grid ModelList="_deckList">
+        <GridHeaders>
+            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Title)" Sortable="@true"></GridHeader>
+            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Price)" Sortable="@true"></GridHeader>
+            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Likes)" Sortable="@true"></GridHeader>
+            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Views)" Sortable="@true"></GridHeader>
+        </GridHeaders>
+        <GridRowTemplate>
+            <td>
+                <a href="@context.Url" target="_blank">@context.Title</a>
+            </td>
+            <td>
+                @context.Price.ToString("C")
+            </td>
+            <td>
+                @context.Likes.ToString()
+            </td>
+            <td>
+                @context.Views.ToString()
+            </td>
+        </GridRowTemplate>
     </Grid>
 }
 
@@ -66,6 +81,5 @@
         var moxfieldScraper = new MoxfieldDeckInfoScraper();
         _deckList = await moxfieldScraper.ScrapeDeckList(_url, _scrapeCount);
     }
-
 
 }

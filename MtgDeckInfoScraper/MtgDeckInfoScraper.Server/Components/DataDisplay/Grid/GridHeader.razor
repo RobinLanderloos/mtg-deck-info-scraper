@@ -2,9 +2,7 @@
 
 <th
     class="@GetClasses()"
-    @Sortable ? @onclick="() => Grid.SortBy(PropertyName ?? String.Empty)" : null
-    >
-
+    @onclick="OnClick">
     <span>
         <small>
             @if (Grid.SortProperties.TryGetValue(PropertyName ?? string.Empty, out var sortingDirection))
@@ -32,6 +30,16 @@
         }
 
         return string.Join(" ", classes);
+    }
+
+    private void OnClick()
+    {
+        if (!Sortable || string.IsNullOrEmpty(PropertyName))
+        {
+            return;
+        }
+
+        Grid.SortBy(PropertyName);
     }
 
 }
