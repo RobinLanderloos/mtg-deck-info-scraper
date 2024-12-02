@@ -1,20 +1,20 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace MxofieldDeckListsScraper.scraping;
+namespace MtgDeckInfoScraper.Server.scraping;
 
 public class DeckInfo
 {
 	public Guid Id { get; private set; }
 	public string Title { get; private set; }
 	public string Url { get; private set; }
-	public float Price { get; private set; }
+	public double Price { get; private set; }
 	public string LastUpdated { get; private set; }
 	public int Likes { get; private set; }
 	public int Views { get; private set; }
 
 	public DeckInfo(string title,
 		string url,
-		float price,
+		double price,
 		string lastUpdated,
 		int likes,
 		int views)
@@ -32,7 +32,7 @@ public class DeckInfo
 	private DeckInfo(Guid id,
 		string title,
 		string url,
-		float price,
+		double price,
 		string lastUpdated,
 		int likes,
 		int views)

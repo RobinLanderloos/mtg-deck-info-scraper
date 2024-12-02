@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MxofieldDeckListsScraper", "MxofieldDeckListsScraper\MxofieldDeckListsScraper\MxofieldDeckListsScraper.csproj", "{8F6C57B1-AB49-442C-87F8-A756379CE1FB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MtgDeckInfoScraper.Server", "MtgDeckInfoScraper\MtgDeckInfoScraper.Server\MtgDeckInfoScraper.Server.csproj", "{8F6C57B1-AB49-442C-87F8-A756379CE1FB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MxofieldDeckListsScraper.Client", "MxofieldDeckListsScraper\MxofieldDeckListsScraper.Client\MxofieldDeckListsScraper.Client.csproj", "{9BF7A8A7-CA13-433C-8C49-B88C9B58D97B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MtgDeckInfoScraper.Client", "MtgDeckInfoScraper\MtgDeckInfoScraper.Client\MtgDeckInfoScraper.Client.csproj", "{9BF7A8A7-CA13-433C-8C49-B88C9B58D97B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

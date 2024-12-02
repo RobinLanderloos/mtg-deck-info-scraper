@@ -1,0 +1,60 @@
+﻿@page "/"
+
+@* TODO-Potential: We could use API calls instead but this is easier for now *@
+@rendermode InteractiveServer
+@using MtgDeckInfoScraper.Server.scraping
+@using MtgDeckInfoScraper.Server.scraping.Moxfield
+
+<h1>Scrape Moxfield</h1>
+<form @onsubmit="ScrapeDeckList">
+    <label for="url">URL</label>
+    <input id="url" type="text" @bind="_url"/>
+    <label for="scrapeCount">Scrape Count</label>
+    <input id="scrapeCount" type="number" @bind="_scrapeCount" min="1" max="100" step="1"/>
+    <button type="submit">Scrape</button>
+</form>
+
+
+<table>
+    <thead>
+    <tr>
+        <th>Deck</th>
+        <th>Price</th>
+        <th>Last Updated</th>
+        <th>Likes</th>
+        <th>Views</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var deck in _deckList)
+    {
+        <tr>
+            <td><a href="@deck.Url">@deck.Title</a></td>
+            <td>@deck.Price</td>
+            <td>@deck.LastUpdated</td>
+            <td>@deck.Likes</td>
+            <td>@deck.Views</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+@code {
+    private string? _url;
+    private int _scrapeCount = 10;
+    private List<DeckInfo> _deckList = new();
+
+    private async Task ScrapeDeckList()
+    {
+        if (string.IsNullOrEmpty(_url))
+        {
+            return;
+        }
+
+        Console.WriteLine($"Scraping deck list {_url}");
+
+        var moxfieldScraper = new MoxfieldDeckInfoScraper();
+        _deckList = await moxfieldScraper.ScrapeDeckList(_url, _scrapeCount);
+    }
+
+}

@@ -4,13 +4,14 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>MtgDeckInfoScraper.Server</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Selenium.Support" Version="4.27.0" />
         <PackageReference Include="Selenium.WebDriver" Version="4.27.0" />
         <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="131.0.6778.8500" />
-        <ProjectReference Include="..\MxofieldDeckListsScraper.Client\MxofieldDeckListsScraper.Client.csproj"/>
+        <ProjectReference Include="..\MtgDeckInfoScraper.Client\MtgDeckInfoScraper.Client.csproj" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.7"/>
     </ItemGroup>
 

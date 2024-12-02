@@ -1,7 +1,7 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 
-namespace MxofieldDeckListsScraper.scraping.Extensions;
+namespace MtgDeckInfoScraper.Server.scraping.Extensions;
 
 public static class WebDriverExtensions
 {
