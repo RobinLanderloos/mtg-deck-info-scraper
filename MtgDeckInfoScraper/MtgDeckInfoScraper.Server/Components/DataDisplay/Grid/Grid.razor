@@ -1,0 +1,75 @@
+﻿@typeparam TModel
+
+<CascadingValue Value="@this">
+    <table class="table table-auto">
+        <thead>
+        <tr>
+            @Headers
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var model in ModelList)
+        {
+            <tr>
+                @Cells
+            </tr>
+        }
+        </tbody>
+    </table>
+</CascadingValue>
+
+@code {
+    [Parameter] public List<TModel> ModelList { get; set; } = new();
+
+    public readonly Dictionary<string, bool> SortProperties = new();
+
+    [Parameter] public RenderFragment Headers { get; set; } = null!;
+    [Parameter] public RenderFragment Cells { get; set; } = null!;
+
+    public void SortBy(string propertyName)
+    {
+        if (string.IsNullOrEmpty(propertyName))
+        {
+            return;
+        }
+
+// If the key is not yet present, add it and set it to true (ascending)
+        if (SortProperties.TryAdd(propertyName, true))
+        {
+        }
+// If the key is already set and is set to false, we have clicked for the third time, so we want to remove it from the sorting
+        else if (!SortProperties[propertyName])
+        {
+            SortProperties.Remove(propertyName);
+        }
+// Else we just toggle the value to sort descending
+        else
+        {
+            SortProperties[propertyName] = false;
+        }
+
+        var modelQueryable = ModelList.AsQueryable();
+
+        foreach (var sortProperty in SortProperties)
+        {
+            Console.WriteLine($"Sorting by: {sortProperty.Key} {sortProperty.Value}");
+            var property = typeof(TModel).GetProperty(propertyName);
+            if (property == null)
+            {
+                return;
+            }
+
+            if (sortProperty.Value)
+            {
+                modelQueryable = modelQueryable.OrderBy(x => property.GetValue(x));
+            }
+            else
+            {
+                modelQueryable = modelQueryable.OrderByDescending(x => property.GetValue(x));
+            }
+        }
+
+        ModelList = modelQueryable.ToList();
+    }
+
+}

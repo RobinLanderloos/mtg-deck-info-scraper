@@ -4,45 +4,55 @@
 @rendermode InteractiveServer
 @using MtgDeckInfoScraper.Server.scraping
 @using MtgDeckInfoScraper.Server.scraping.Moxfield
+@using MtgDeckInfoScraper.Server.Components.DataDisplay.Grid
 
-<h1>Scrape Moxfield</h1>
-<form @onsubmit="ScrapeDeckList">
-    <label for="url">URL</label>
-    <input id="url" type="text" @bind="_url"/>
-    <label for="scrapeCount">Scrape Count</label>
-    <input id="scrapeCount" type="number" @bind="_scrapeCount" min="1" max="100" step="1"/>
-    <button type="submit">Scrape</button>
-</form>
+<h1 class="text-3xl font-bold mb-5">Moxfield Scraper</h1>
 
+<div class="mb-5">
+    <div class="form-control">
+        <label class="label">
+            Decklist URL
+        </label>
+        <input id="url" type="text" @bind="_url" placeholder="Provide a URL to a deck list" class="input input-bordered"/>
+    </div>
+    <div class="form-control">
+        <label class="label">
+            Scrape Count
+        </label>
+        <input id="scrapeCount" type="number" class="input input-bordered" @bind="_scrapeCount"/>
+    </div>
+    <button class="btn" @onclick="ScrapeDeckList" type="submit">Scrape</button>
+</div>
 
-<table>
-    <thead>
-    <tr>
-        <th>Deck</th>
-        <th>Price</th>
-        <th>Last Updated</th>
-        <th>Likes</th>
-        <th>Views</th>
-    </tr>
-    </thead>
-    <tbody>
-    @foreach (var deck in _deckList)
-    {
-        <tr>
-            <td><a href="@deck.Url">@deck.Title</a></td>
-            <td>@deck.Price</td>
-            <td>@deck.LastUpdated</td>
-            <td>@deck.Likes</td>
-            <td>@deck.Views</td>
-        </tr>
-    }
-    </tbody>
-</table>
+@if (_deckList.Count > 0)
+{
+    <h2 class="text-2xl font-bold mb-5">Scrape Results</h2>
+    
+    <Grid TModel="DeckInfo" ModelList="_deckList">
+        <Headers>
+            <Header TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Title)" Sortable="@true"></Header>
+        </Headers>
+        <Cells>
+        </Cells>
+    </Grid>
+}
 
 @code {
+
     private string? _url;
     private int _scrapeCount = 10;
     private List<DeckInfo> _deckList = new();
+
+    protected override void OnInitialized()
+    {
+        _deckList = new List<DeckInfo>()
+        {
+            new("Title 1", "URL 1", 24.24, "5m ago", 1000, 4200),
+            new("Title 2", "URL 2", 14.24, "5m ago", 50, 450),
+            new("Title 3", "URL 3", 54.24, "5m ago", 80, 320),
+            new("Title 4", "URL 4", 16.24, "5m ago", 20, 720),
+        };
+    }
 
     private async Task ScrapeDeckList()
     {
@@ -56,5 +66,6 @@
         var moxfieldScraper = new MoxfieldDeckInfoScraper();
         _deckList = await moxfieldScraper.ScrapeDeckList(_url, _scrapeCount);
     }
+
 
 }

@@ -9,3 +9,6 @@ riderModule.iml
 
 *.DotSettings.user
 *.DotSettings
+
+package-lock.json
+node_modules/

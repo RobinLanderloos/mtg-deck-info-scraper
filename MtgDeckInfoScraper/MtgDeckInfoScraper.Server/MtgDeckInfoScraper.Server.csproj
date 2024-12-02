@@ -15,4 +15,15 @@
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.7"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="scraping\drivers\win64\" />
+    </ItemGroup>
+    
+<!--    <ItemGroup>-->
+<!--        <Watch Include="./wwwroot/css/app.min.css" Exclude="./wwwroot/**/*;obj\**\*;bin\**\*" />-->
+<!--    </ItemGroup>-->
+<!--    -->
+<!--    <Target Name="Tailwind" BeforeTargets="Compile">-->
+<!--        <Exec Command="npx tailwindcss -i ./wwwroot/css/app.css -o ./wwwroot/css/app.min.css &#45;&#45;watch" />-->
+<!--    </Target>-->
 </Project>

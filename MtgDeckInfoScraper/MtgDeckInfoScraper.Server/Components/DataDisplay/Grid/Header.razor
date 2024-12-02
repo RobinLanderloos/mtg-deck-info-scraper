@@ -1,0 +1,37 @@
+﻿@typeparam TModel
+
+<th
+    class="@GetClasses()"
+    @Sortable ? @onclick="() => Grid.SortBy(PropertyName ?? String.Empty)" : null
+    >
+
+    <span>
+        <small>
+            @if (Grid.SortProperties.TryGetValue(PropertyName ?? string.Empty, out var sortingDirection))
+            {
+                @(sortingDirection ? "▲" : "▼")
+            }
+        </small>
+    </span>
+    @PropertyName
+</th>
+
+@code {
+    [Parameter] [EditorRequired] public string? PropertyName { get; set; }
+
+    [Parameter] public bool Sortable { get; set; }
+
+    [CascadingParameter] public Grid<TModel> Grid { get; set; } = null!;
+
+    private string GetClasses()
+    {
+        var classes = new List<string>();
+        if (Sortable)
+        {
+            classes.Add("cursor-pointer");
+        }
+
+        return string.Join(" ", classes);
+    }
+
+}
