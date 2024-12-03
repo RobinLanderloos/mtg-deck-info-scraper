@@ -31,4 +31,11 @@ app.MapRazorComponents<App>()
 	.AddInteractiveServerRenderMode()
 	.AddAdditionalAssemblies(typeof(MtgDeckInfoScraper.Client._Imports).Assembly);
 
+// Make sure to install playwright
+var exitCode = Microsoft.Playwright.Program.Main(new[] { "install" });
+if (exitCode != 0)
+{
+	throw new Exception($"Playwright exited with code {exitCode}");
+}
+
 await app.RunAsync();

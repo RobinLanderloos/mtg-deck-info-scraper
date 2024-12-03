@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using Microsoft.Playwright;
 using MtgDeckInfoScraper.Server.scraping.Extensions;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -7,159 +8,216 @@ namespace MtgDeckInfoScraper.Server.scraping.Moxfield;
 
 public class MoxfieldDeckInfoScraper
 {
-    public async Task<List<DeckInfo>> ScrapeDeckList(string deckListUrl,
-        int count = 10)
-    {
-        var deckLinksDriver = new ChromeDriver();
-        await deckLinksDriver.Navigate().GoToUrlAsync(deckListUrl);
+	private const bool Headless = false;
 
-        await Task.Delay(2000);
+	public async Task<List<DeckInfo>> ScrapeDeckList(string deckListUrl,
+		int count = 10)
+	{
+		var deckLinks = await ScrapeDeckLinks(deckListUrl);
 
-        var deckLinks = (ScrapeDeckLinks(deckLinksDriver)).ToArray();
+		var toCheck = count > deckLinks.Count ? deckLinks : deckLinks.Take(count);
 
-        deckLinksDriver.Quit();
+		var deckList = new List<DeckInfo>();
 
-        var toCheck = count > deckLinks.Length ? deckLinks : deckLinks.Take(count);
+		int chunkCount = 0;
+		int deckCount = 0;
+		foreach (var deckLinkChunk in toCheck.Chunk(5))
+		{
+			chunkCount++;
+			Console.WriteLine($"Scraping chunk {chunkCount}");
+			var scrapeTasks = new List<Task>();
+			foreach (var deckLink in deckLinkChunk)
+			{
+				scrapeTasks.Add(Task.Run(async () =>
+				{
+					deckCount++;
+					Console.WriteLine($"Scraping deck {deckCount}: {deckLink}");
+					var info = await NavigateToAndScrapeDeckInfo(deckLink);
+					Console.WriteLine(info);
+					deckList.Add(info);
+				}));
+			}
 
-        var deckList = new List<DeckInfo>();
-
-        int chunkCount = 0;
-        int deckCount = 0;
-        foreach (var deckLinkChunk in toCheck.Chunk(5))
-        {
-            chunkCount++;
-            Console.WriteLine($"Scraping chunk {chunkCount}");
-            var scrapeTasks = new List<Task>();
-            foreach (var deckLink in deckLinkChunk)
-            {
-                scrapeTasks.Add(Task.Run(async () =>
-                {
-                    var driver = new ChromeDriver();
-
-                    deckCount++;
-                    Console.WriteLine($"Scraping deck {deckCount}: {deckLink}");
-                    var info = await NavigateToAndScrapeDeckInfo(driver, deckLink);
-                    Console.WriteLine(info);
-                    deckList.Add(info);
-
-                    driver.Quit();
-                }));
-            }
-
-            await Task.WhenAll(scrapeTasks);
-        }
+			await Task.WhenAll(scrapeTasks);
+		}
 
 
-        return deckList;
-    }
+		return deckList;
+	}
 
-    /// <summary>
-    /// Scrape the deck info from the given url, expect
-    /// </summary>
-    /// <param name="driver"></param>
-    /// <param name="deckUrl"></param>
-    /// <returns></returns>
-    private async Task<DeckInfo> NavigateToAndScrapeDeckInfo(IWebDriver driver, string deckUrl)
-    {
-        await driver.Navigate().GoToUrlAsync(deckUrl);
-        await Task.Delay(2000);
+	/// <summary>
+	/// Scrape the deck info from the given url, expect
+	/// </summary>
+	/// <param name="deckUrl"></param>
+	/// <returns></returns>
+	private async Task<DeckInfo> NavigateToAndScrapeDeckInfo(string deckUrl)
+	{
+		using var playwright = await Playwright.CreateAsync();
+		await using var browser = await playwright.Chromium.LaunchAsync(new()
+		{
+			Headless = Headless,
+		});
 
-        // Get title
-        var title = ScrapeDeckTitle(driver);
-        // Get price
-        var price = ScrapeDeckPrice(driver);
-        // Get last updated
-        var lastUpdated = ScrapeLastUpdated(driver);
-        // Get likes
-        var likes = ScrapeLikes(driver);
-        // Get views
-        var views = ScrapeViews(driver);
+		var page = await browser.NewPageAsync();
+		await page.GotoAsync(deckUrl);
 
-        return new DeckInfo(title, deckUrl, price, lastUpdated, likes, views);
-    }
+		await page.WaitForSelectorAsync("article[class='deckview']");
 
-    private int ScrapeViews(IWebDriver driver)
-    {
-        const string viewsXPath = "//*[@id='deck-header-views']/div[2]";
+		// Get title
+		var title = await ScrapeDeckTitle(page);
 
-        var viewsElement = driver.FindElement(By.XPath(viewsXPath));
-        var views = int.Parse(viewsElement.Text, NumberStyles.AllowThousands, new CultureInfo("en-US"));
-        return views;
-    }
+		// Get price
+		var price = await ScrapeDeckPrice(page);
+		// Get last updated
+		var lastUpdated = await ScrapeLastUpdated(page);
+		// Get likes
+		var likes = await ScrapeLikes(page);
+		// Get views
+		var views = await ScrapeViews(page);
 
-    private int ScrapeLikes(IWebDriver driver)
-    {
-        const string likesXPath = "//*[@id='deck-header-like']/a/div[1]";
+		return new DeckInfo(title, deckUrl, price, lastUpdated, likes, views);
+	}
 
-        var likesElement = driver.FindElement(By.XPath(likesXPath));
-        var likes = int.Parse(likesElement.Text, NumberStyles.AllowThousands, new CultureInfo("en-US"));
-        return likes;
-    }
+	private static async Task<int> ScrapeViews(IPage page)
+	{
+		const string viewsXPath = "//*[@id='deck-header-views']/div[2]";
 
-    private string ScrapeLastUpdated(IWebDriver driver)
-    {
-        const string lastUpdatedId = "lastupdated";
+		var viewsText = await GetTextBySelector(page, viewsXPath);
+		var views = int.Parse(viewsText ?? "0", NumberStyles.AllowThousands, new CultureInfo("en-US"));
 
-        var lastUpdatedElement = driver.FindElement(By.Id(lastUpdatedId));
-        return lastUpdatedElement.Text;
-    }
+		return views;
+	}
 
-    private double ScrapeDeckPrice(IWebDriver driver)
-    {
-        const string buyButtonXPath = "//a[span[text()='Buy']]";
-        const string buyNowForSpanXPath = "//span[starts-with(text(), 'Buy Now for')]";
-        const string tcgPlayerButtonXPath = "//div[contains(text(), 'TCGplayer')]";
+	private static async Task<int> ScrapeLikes(IPage page)
+	{
+		var likesText = await GetTextBySelector(page, "div[id='deck-header-like']");
 
-        var priceSpans = driver.FindElements(By.XPath(buyButtonXPath));
-        var js = (IJavaScriptExecutor)driver;
-        js.ExecuteScript("arguments[0].click();", priceSpans[0]);
+		var likes = int.Parse(likesText ?? "0", NumberStyles.AllowThousands, new CultureInfo("en-US"));
+		return likes;
+	}
 
-        driver.WaitAndFindElements(By.XPath(buyNowForSpanXPath), 10);
+	private static async Task<string?> GetTextBySelector(IPage page,
+		string selector)
+	{
+		var element = await page.QuerySelectorAsync(selector);
 
-        var tcgPlayerButton = driver.FindElement(By.XPath(tcgPlayerButtonXPath));
-        tcgPlayerButton.Click();
+		if (element == null)
+		{
+			return null;
+		}
 
-        var buyNowForSpans = driver.FindElements(By.XPath(buyNowForSpanXPath));
+		return await element.TextContentAsync();
+	}
 
-        var dollarIndex = buyNowForSpans[0].Text.IndexOf('$');
-        var priceSubstring = buyNowForSpans[0].Text.Substring(dollarIndex + 1).Trim();
-        var price = Convert.ToDouble(priceSubstring, new CultureInfo("en-US"));
-        return price;
-    }
+	private static async Task<string> ScrapeLastUpdated(IPage page)
+	{
+		const string lastUpdatedId = "lastupdated";
 
-    private string ScrapeDeckTitle(IWebDriver driver)
-    {
-        const string titleXPath = "//span[contains(@class, 'deckheader-name')]";
-        var titleSpans = driver.WaitAndFindElements(By.XPath(titleXPath), 10);
+		var lastUpdatedElementText = await GetById(page, lastUpdatedId);
+		return lastUpdatedElementText ?? "No last updated found";
+	}
 
-        // Get the text from the first span
-        var title = titleSpans.ElementAt(0).Text;
 
-        return title ?? "No title found";
-    }
+	private static async Task<double> ScrapeDeckPrice(IPage page)
+	{
+		await page.Locator("a")
+			.Filter(new() { HasText = "BuyDeck" })
+			.ClickAsync();
 
-    /// <summary>
-    /// Scrapes the deck links from the current page, and returns them as a list of strings.
-    /// </summary>
-    private IEnumerable<string> ScrapeDeckLinks(IWebDriver driver)
-    {
-        var links = driver.FindElements(By.TagName("a")).Select(a => a?.GetDomProperty("href")).ToList();
+		var buyNowLocator = page
+			.GetByRole(AriaRole.Button, new() { Name = "Buy Now for" });
 
-        foreach (var link in links)
-        {
-            if (link == null) continue;
+		await buyNowLocator.WaitForAsync();
 
-            if (!link.Contains("/decks/")) continue;
+		await page.Locator("label")
+			.Filter(new() { HasText = "TCGplayer" })
+			.ClickAsync();
 
-            if (link.Contains("/decks/public")
-                || link.Contains("/decks/liked")
-                || link.Contains("/decks/following"))
+		var buyNowForText = await buyNowLocator.TextContentAsync();
 
-            {
-                continue;
-            }
+		if (buyNowForText == null)
+		{
+			return 0;
+		}
 
-            yield return link;
-        }
-    }
+		var dollarIndex = buyNowForText.IndexOf('$');
+		var priceSubstring = buyNowForText.Substring(dollarIndex + 1).Trim();
+		var price = Convert.ToDouble(priceSubstring, new CultureInfo("en-US"));
+		return price;
+	}
+
+
+	private static async Task<string> ScrapeDeckTitle(IPage page)
+	{
+		var titleSpan = await page.QuerySelectorAsync("span[class='deckheader-name']");
+
+		if (titleSpan == null)
+		{
+			return "No title found";
+		}
+
+		return await titleSpan.TextContentAsync() ?? "No title found";
+	}
+
+	/// <summary>
+	/// Scrapes the deck links from the current page, and returns them as a list of strings.
+	/// </summary>
+	private async Task<List<string>> ScrapeDeckLinks(string deckListUrl)
+	{
+		using var playwright = await Playwright.CreateAsync();
+		await using var browser = await playwright.Chromium.LaunchAsync(new()
+		{
+			Headless = Headless,
+		});
+
+		var page = await browser.NewPageAsync();
+		await page.GotoAsync(deckListUrl);
+
+		await page.WaitForSelectorAsync("div[class='browse-ad-layout']");
+
+		Console.WriteLine("Waiting for deck list to load");
+
+		var links = await page.QuerySelectorAllAsync("a[href*='/decks/']");
+
+		var hrefs = await Task.WhenAll(
+			links
+				.Select(async link => await link.GetAttributeAsync("href"))
+		);
+
+		var validLinks = new List<string>();
+
+		const string moxfieldBaseUrl = "https://www.moxfield.com";
+
+		foreach (var link in hrefs)
+		{
+			if (link == null) continue;
+
+			if (!link.Contains("/decks/")) continue;
+
+			if (link.Contains("/decks/public")
+			    || link.Contains("/decks/liked")
+			    || link.Contains("/decks/following"))
+
+			{
+				continue;
+			}
+
+			validLinks.Add(moxfieldBaseUrl + link);
+		}
+
+		return validLinks;
+	}
+
+	private static async Task<string?> GetById(IPage page,
+		string id)
+	{
+		var element = await page.QuerySelectorAsync($"#{id}");
+
+		if (element == null)
+		{
+			return null;
+		}
+
+		return await element.TextContentAsync();
+	}
 }

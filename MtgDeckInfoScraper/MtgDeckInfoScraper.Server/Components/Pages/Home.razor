@@ -27,7 +27,7 @@
 
 @if (_deckList.Count > 0)
 {
-    <h2 class="text-2xl font-bold mb-5">Scrape Results</h2>
+    <h2 class="text-2xl font-bold mb-5">Scrape Results (@_deckList.Count)</h2>
 
     <Grid ModelList="_deckList">
         <GridHeaders>
@@ -35,6 +35,7 @@
             <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Price)" Sortable="@true"></GridHeader>
             <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Likes)" Sortable="@true"></GridHeader>
             <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Views)" Sortable="@true"></GridHeader>
+            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.LastUpdated)"></GridHeader>
         </GridHeaders>
         <GridRowTemplate>
             <td>
@@ -49,14 +50,17 @@
             <td>
                 @context.Views.ToString()
             </td>
+            <td>
+                @context.LastUpdated
+            </td>
         </GridRowTemplate>
     </Grid>
 }
 
 @code {
 
-    private string? _url;
-    private int _scrapeCount = 10;
+    private string? _url = "https://moxfield.com/decks/public?q=eyJodWIiOiIiLCJmb3JtYXQiOiIiLCJkZWNrTmFtZSI6IiIsImNhcmRJZCI6IiIsImNhcmROYW1lIjoiIiwiYm9hcmQiOiIiLCJsYXN0U2VhcmNoIjoiIiwiZmlsdGVyIjoiIiwiY29tbWFuZGVyQ2FyZElkIjoicjg0YjEiLCJjb21tYW5kZXJDYXJkTmFtZSI6IkNhcHRhaW4gTidnaGF0aHJvZCIsInBhcnRuZXJDYXJkSWQiOiIiLCJwYXJ0bmVyQ2FyZE5hbWUiOiIiLCJjb21tYW5kZXJTaWduYXR1cmVTcGVsbENhcmRJZCI6IiIsImNvbW1hbmRlclNpZ25hdHVyZVNwZWxsQ2FyZE5hbWUiOiIiLCJwYXJ0bmVyU2lnbmF0dXJlU3BlbGxDYXJkSWQiOiIiLCJwYXJ0bmVyU2lnbmF0dXJlU3BlbGxDYXJkTmFtZSI6IiIsImNvbXBhbmlvbkNhcmRJZCI6IiIsImNvbXBhbmlvbkNhcmROYW1lIjoiIiwiY29tbWFuZXJUaWVyU2V0dGluZyI6ImVxdWFscyIsImNvbW1hbmVyVGllciI6IiIsImRlY2tUaWVyU2V0dGluZyI6ImVxdWFscyIsImRlY2tUaWVyIjoiIiwic29ydENvbHVtbiI6InZpZXdzIiwic29ydERpcmVjdGlvbiI6ImRlc2NlbmRpbmciLCJwYWdlTnVtYmVyIjoxLCJwYWdlU2l6ZSI6NjQsInZpZXciOiJwdWJsaWMiLCJzZWxlY3RlZENhcmRJZHMiOnsiY29tbWFuZGVyQ2FyZElkIjoicjg0YjEifSwic2VsZWN0ZWRDYXJkTmFtZXMiOnsiY29tbWFuZGVyQ2FyZElkIjoiQ2FwdGFpbiBOJ2doYXRocm9kIn0sImh1Yk5hbWUiOiIifQ%3D%3D";
+    private int _scrapeCount = 1;
     private List<DeckInfo> _deckList = new();
 
     protected override void OnInitialized()
