@@ -1,8 +1,5 @@
 ﻿using System.Globalization;
 using Microsoft.Playwright;
-using MtgDeckInfoScraper.Server.scraping.Extensions;
-using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
 
 namespace MtgDeckInfoScraper.Server.scraping.Moxfield;
 

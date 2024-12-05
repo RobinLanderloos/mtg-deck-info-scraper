@@ -13,6 +13,10 @@
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.7"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="scraping\Extensions\" />
+    </ItemGroup>
+
     <!--    <ItemGroup>-->
     <!--        <Watch Include="./wwwroot/css/app.min.css" Exclude="./wwwroot/**/*;obj\**\*;bin\**\*" />-->
     <!--    </ItemGroup>-->
