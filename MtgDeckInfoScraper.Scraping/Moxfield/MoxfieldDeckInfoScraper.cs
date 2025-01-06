@@ -72,7 +72,7 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
     {
         _logger.LogInformation("Navigating to deck URL: {DeckUrl}", deckUrl);
 
-        var userDataDir = "C:\\Users\\FK6216\\AppData\\Local\\Google\\Chrome\\User Data\\Default";
+        var userDataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Google\\Chrome\\User Data\\Default");
 
         using var playwright = await Playwright.CreateAsync();
         _logger.LogDebug("Playwright instance created.");
@@ -89,7 +89,7 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
         _logger.LogInformation("Navigating to the URL: {DeckUrl}", deckUrl);
         await page.GotoAsync(deckUrl);
 
-        await SignIn(page);
+        // await SignIn(page);
 
         _logger.LogDebug("Waiting for selector 'article[class=\"deckview\"]' to be available.");
         await page.WaitForSelectorAsync("section[class='deckview']");
