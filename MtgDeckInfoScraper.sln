@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MtgDeckInfoScraper.Server", "MtgDeckInfoScraper\MtgDeckInfoScraper.Server\MtgDeckInfoScraper.Server.csproj", "{8F6C57B1-AB49-442C-87F8-A756379CE1FB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MtgDeckInfoScraper.App", "MtgDeckInfoScraper.App\MtgDeckInfoScraper.App.csproj", "{31B32DF8-AFD6-4878-A276-62A04F133D03}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MtgDeckInfoScraper.Client", "MtgDeckInfoScraper\MtgDeckInfoScraper.Client\MtgDeckInfoScraper.Client.csproj", "{9BF7A8A7-CA13-433C-8C49-B88C9B58D97B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MtgDeckInfoScraper.Scraping", "MtgDeckInfoScraper.Scraping\MtgDeckInfoScraper.Scraping.csproj", "{61787278-D4EC-4CDC-A45E-C0A7743CD5FA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -10,13 +10,13 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{8F6C57B1-AB49-442C-87F8-A756379CE1FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8F6C57B1-AB49-442C-87F8-A756379CE1FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8F6C57B1-AB49-442C-87F8-A756379CE1FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8F6C57B1-AB49-442C-87F8-A756379CE1FB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9BF7A8A7-CA13-433C-8C49-B88C9B58D97B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9BF7A8A7-CA13-433C-8C49-B88C9B58D97B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9BF7A8A7-CA13-433C-8C49-B88C9B58D97B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9BF7A8A7-CA13-433C-8C49-B88C9B58D97B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31B32DF8-AFD6-4878-A276-62A04F133D03}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31B32DF8-AFD6-4878-A276-62A04F133D03}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31B32DF8-AFD6-4878-A276-62A04F133D03}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31B32DF8-AFD6-4878-A276-62A04F133D03}.Release|Any CPU.Build.0 = Release|Any CPU
+		{61787278-D4EC-4CDC-A45E-C0A7743CD5FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61787278-D4EC-4CDC-A45E-C0A7743CD5FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{61787278-D4EC-4CDC-A45E-C0A7743CD5FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{61787278-D4EC-4CDC-A45E-C0A7743CD5FA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -1,0 +1,105 @@
+﻿@page "/"
+
+@using System.Globalization
+@using MtgDeckInfoScraper.Scraping
+@using MtgDeckInfoScraper.Scraping.Models
+@using MtgDeckInfoScraper.Scraping.Moxfield
+
+<h1 class="text-3xl font-bold mb-5">Moxfield Scraper</h1>
+
+<div class="mb-5">
+    <div class="form-control">
+        <label class="label">
+            Decklist URL
+        </label>
+        <input id="url" type="text" @bind="_url" placeholder="Provide a URL to a deck list"
+               class="input input-bordered"/>
+    </div>
+    <div class="form-control">
+        <label class="label">
+            Scrape Count
+        </label>
+        <input id="scrapeCount" type="number" class="input input-bordered" @bind="_scrapeCount"/>
+    </div>
+    <button class="btn" @onclick="ScrapeDeckList" type="submit">Scrape</button>
+</div>
+
+@if (_deckList.Count > 0)
+{
+    <h2 class="text-2xl font-bold mb-5">Scrape Results (@_deckList.Count)</h2>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div>
+            <p class="text-red-500 font-bold">@_errorMessage</p>
+        </div>
+    }
+
+    <Grid ModelList="_deckList">
+        <GridHeaders>
+            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Title)" Sortable="@true"></GridHeader>
+            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Price)" Sortable="@true"></GridHeader>
+            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Likes)" Sortable="@true"></GridHeader>
+            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Views)" Sortable="@true"></GridHeader>
+            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.LastUpdated)"></GridHeader>
+        </GridHeaders>
+        <GridRowTemplate>
+            <td>
+                <a href="@context.Url" target="_blank">@context.Title</a>
+            </td>
+            <td>
+                @context.Price.ToString("C", new CultureInfo("en-US"))
+            </td>
+            <td>
+                @context.Likes.ToString()
+            </td>
+            <td>
+                @context.Views.ToString()
+            </td>
+            <td>
+                @context.LastUpdated
+            </td>
+        </GridRowTemplate>
+    </Grid>
+}
+
+@code {
+    [Inject] public DeckInfoScraperFactory DeckInfoScraperFactory { get; set; } = null!;
+
+    private string? _url = "https://moxfield.com/decks/public?q=eyJodWIiOiIiLCJmb3JtYXQiOiIiLCJkZWNrTmFtZSI6IiIsImNhcmRJZCI6IiIsImNhcmROYW1lIjoiIiwiYm9hcmQiOiIiLCJsYXN0U2VhcmNoIjoiIiwiZmlsdGVyIjoiIiwiY29tbWFuZGVyQ2FyZElkIjoicjg0YjEiLCJjb21tYW5kZXJDYXJkTmFtZSI6IkNhcHRhaW4gTidnaGF0aHJvZCIsInBhcnRuZXJDYXJkSWQiOiIiLCJwYXJ0bmVyQ2FyZE5hbWUiOiIiLCJjb21tYW5kZXJTaWduYXR1cmVTcGVsbENhcmRJZCI6IiIsImNvbW1hbmRlclNpZ25hdHVyZVNwZWxsQ2FyZE5hbWUiOiIiLCJwYXJ0bmVyU2lnbmF0dXJlU3BlbGxDYXJkSWQiOiIiLCJwYXJ0bmVyU2lnbmF0dXJlU3BlbGxDYXJkTmFtZSI6IiIsImNvbXBhbmlvbkNhcmRJZCI6IiIsImNvbXBhbmlvbkNhcmROYW1lIjoiIiwiY29tbWFuZXJUaWVyU2V0dGluZyI6ImVxdWFscyIsImNvbW1hbmVyVGllciI6IiIsImRlY2tUaWVyU2V0dGluZyI6ImVxdWFscyIsImRlY2tUaWVyIjoiIiwic29ydENvbHVtbiI6InZpZXdzIiwic29ydERpcmVjdGlvbiI6ImRlc2NlbmRpbmciLCJwYWdlTnVtYmVyIjoxLCJwYWdlU2l6ZSI6NjQsInZpZXciOiJwdWJsaWMiLCJzZWxlY3RlZENhcmRJZHMiOnsiY29tbWFuZGVyQ2FyZElkIjoicjg0YjEifSwic2VsZWN0ZWRDYXJkTmFtZXMiOnsiY29tbWFuZGVyQ2FyZElkIjoiQ2FwdGFpbiBOJ2doYXRocm9kIn0sImh1Yk5hbWUiOiIifQ%3D%3D";
+    private int _scrapeCount = 1;
+    private List<DeckInfo> _deckList = new();
+    private string _errorMessage = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _deckList = new List<DeckInfo>()
+        {
+            new("Title 1", "URL 1", 24.24, "5m ago", 1000, 4200),
+            new("Title 2", "URL 2", 14.24, "5m ago", 50, 450),
+            new("Title 3", "URL 3", 54.24, "5m ago", 80, 320),
+            new("Title 4", "URL 4", 16.24, "5m ago", 20, 720),
+        };
+    }
+
+    private async Task ScrapeDeckList()
+    {
+        if (string.IsNullOrEmpty(_url))
+        {
+            return;
+        }
+
+        Console.WriteLine($"Scraping deck list {_url}");
+        var scraper = DeckInfoScraperFactory.Create(SupportedSites.Moxfield);
+
+        try
+        {
+            _deckList = await scraper.ScrapeDeckList(_url, _scrapeCount);
+        }
+        catch (Exception e)
+        {
+            _errorMessage = e.Message;
+        }
+    }
+
+}
