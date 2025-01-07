@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics;
+using System.Globalization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using MtgDeckInfoScraper.Scraping.Abstractions;
@@ -8,23 +9,26 @@ namespace MtgDeckInfoScraper.Scraping.Moxfield;
 
 public class MoxfieldDeckInfoScraper : IDeckInfoScraper
 {
-    private const bool Headless = false;
     private readonly ILogger<MoxfieldDeckInfoScraper> _logger;
+    private readonly MtgDeckInfoScraperPreferences _preferences;
 
-    public MoxfieldDeckInfoScraper(ILogger<MoxfieldDeckInfoScraper> logger)
+    public MoxfieldDeckInfoScraper(ILogger<MoxfieldDeckInfoScraper> logger, MtgDeckInfoScraperPreferences preferences)
     {
         _logger = logger;
+        _preferences = preferences;
     }
+
 
     public async Task<List<DeckInfo>> ScrapeDeckList(string deckListUrl, int count = 10)
     {
         using var playwright = await Playwright.CreateAsync();
         _logger.LogDebug("Playwright instance created.");
 
-        await using var browser = await playwright.Chromium.ConnectOverCDPAsync("http://localhost:9222", new()
-        {
-            SlowMo = 1000,
-        });
+        await using var browser = await playwright.Chromium.ConnectOverCDPAsync(
+            $"http://localhost:{_preferences.ChromeRemoteDebuggingPort}", new()
+            {
+                SlowMo = 1000,
+            });
 
         _logger.LogInformation("Starting to scrape deck list from URL: {DeckListUrl} with count: {Count}", deckListUrl,
             count);
@@ -32,7 +36,7 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
         var existingBrowserContext = browser.Contexts[0];
 
         var deckLinks = await ScrapeDeckLinks(existingBrowserContext, deckListUrl);
-        _logger.LogInformation("Retrieved {DeckLinkCount} deck links", deckLinks.Count);
+        _logger.LogDebug("Retrieved {DeckLinkCount} deck links", deckLinks.Count);
 
         var toCheck = count > deckLinks.Count ? deckLinks : deckLinks.Take(count);
         var deckList = new List<DeckInfo>();
@@ -42,14 +46,14 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
         foreach (var deckLinkChunk in toCheck.Chunk(5))
         {
             chunkCount++;
-            _logger.LogInformation("Processing chunk {ChunkNumber}", chunkCount);
+            _logger.LogDebug("Processing chunk {ChunkNumber}", chunkCount);
 
             var scrapeTasks = new List<Task>();
             foreach (var deckLink in deckLinkChunk)
             {
                 deckCount++;
                 var currentDeckCount = deckCount;
-                _logger.LogInformation("Starting scrape for deck {DeckNumber}: {DeckLink}", currentDeckCount, deckLink);
+                _logger.LogDebug("Starting scrape for deck {DeckNumber}: {DeckLink}", currentDeckCount, deckLink);
 
                 scrapeTasks.Add(Task.Run(async () =>
                 {
@@ -74,34 +78,24 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
     {
         _logger.LogInformation("Navigating to deck URL: {DeckUrl}", deckUrl);
 
-        _logger.LogDebug("Chromium browser launched with headless mode: {HeadlessMode}", Headless);
-
         var page = await browserContext.NewPageAsync();
-        _logger.LogDebug("New browser page created.");
         _logger.LogInformation("Navigating to the URL: {DeckUrl}", deckUrl);
         await page.GotoAsync(deckUrl);
 
-        _logger.LogDebug("Waiting for selector 'article[class=\"deckview\"]' to be available.");
         await page.WaitForSelectorAsync("section[class='deckview']");
-        _logger.LogDebug("Selector 'article[class=\"deckview\"]' loaded successfully.");
 
-        _logger.LogDebug("Starting to scrape deck title.");
         var title = await ScrapeDeckTitle(page);
         _logger.LogDebug("Deck title scraped: {Title}", title);
 
-        _logger.LogDebug("Starting to scrape deck price.");
         var price = await ScrapeDeckPrice(page);
         _logger.LogDebug("Deck price scraped: {Price}", price);
 
-        _logger.LogDebug("Starting to scrape last updated timestamp.");
         var lastUpdated = await ScrapeLastUpdated(page);
         _logger.LogDebug("Last updated timestamp scraped: {LastUpdated}", lastUpdated);
 
-        _logger.LogDebug("Starting to scrape deck likes.");
         var likes = await ScrapeLikes(page);
         _logger.LogDebug("Deck likes scraped: {Likes}", likes);
 
-        _logger.LogDebug("Starting to scrape deck views.");
         var views = await ScrapeViews(page);
         _logger.LogDebug("Deck views scraped: {Views}", views);
 
@@ -187,6 +181,7 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
         _logger.LogInformation("Scraping deck price...");
         try
         {
+            // Ugly code, refactor later
             var priceText = await SafeScrape(page, "span[id='shoppingcart']", "price", "$0");
             char symbol = '$';
             double price = 0;

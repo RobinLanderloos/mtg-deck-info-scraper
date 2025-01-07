@@ -1,11 +1,15 @@
 ﻿@page "/"
+@implements IAsyncDisposable
 
+@using System.Diagnostics
 @using System.Globalization
 @using MtgDeckInfoScraper.Scraping
 @using MtgDeckInfoScraper.Scraping.Models
 @using MtgDeckInfoScraper.Scraping.Moxfield
 
 <h1 class="text-3xl font-bold mb-5">Moxfield Scraper</h1>
+
+<button class="btn btn-primary" @onclick="StartChromeWithRemoteDebugging">Start Chrome with remote debugging</button>
 
 <div class="mb-5">
     <div class="form-control">
@@ -66,21 +70,34 @@
 
 @code {
     [Inject] public DeckInfoScraperFactory DeckInfoScraperFactory { get; set; } = null!;
+    [Inject] public MtgDeckInfoScraperPreferences Preferences { get; set; } = null!;
 
     private string? _url = "https://moxfield.com/decks/public?q=eyJodWIiOiIiLCJmb3JtYXQiOiIiLCJkZWNrTmFtZSI6IiIsImNhcmRJZCI6IiIsImNhcmROYW1lIjoiIiwiYm9hcmQiOiIiLCJsYXN0U2VhcmNoIjoiIiwiZmlsdGVyIjoiIiwiY29tbWFuZGVyQ2FyZElkIjoicjg0YjEiLCJjb21tYW5kZXJDYXJkTmFtZSI6IkNhcHRhaW4gTidnaGF0aHJvZCIsInBhcnRuZXJDYXJkSWQiOiIiLCJwYXJ0bmVyQ2FyZE5hbWUiOiIiLCJjb21tYW5kZXJTaWduYXR1cmVTcGVsbENhcmRJZCI6IiIsImNvbW1hbmRlclNpZ25hdHVyZVNwZWxsQ2FyZE5hbWUiOiIiLCJwYXJ0bmVyU2lnbmF0dXJlU3BlbGxDYXJkSWQiOiIiLCJwYXJ0bmVyU2lnbmF0dXJlU3BlbGxDYXJkTmFtZSI6IiIsImNvbXBhbmlvbkNhcmRJZCI6IiIsImNvbXBhbmlvbkNhcmROYW1lIjoiIiwiY29tbWFuZXJUaWVyU2V0dGluZyI6ImVxdWFscyIsImNvbW1hbmVyVGllciI6IiIsImRlY2tUaWVyU2V0dGluZyI6ImVxdWFscyIsImRlY2tUaWVyIjoiIiwic29ydENvbHVtbiI6InZpZXdzIiwic29ydERpcmVjdGlvbiI6ImRlc2NlbmRpbmciLCJwYWdlTnVtYmVyIjoxLCJwYWdlU2l6ZSI6NjQsInZpZXciOiJwdWJsaWMiLCJzZWxlY3RlZENhcmRJZHMiOnsiY29tbWFuZGVyQ2FyZElkIjoicjg0YjEifSwic2VsZWN0ZWRDYXJkTmFtZXMiOnsiY29tbWFuZGVyQ2FyZElkIjoiQ2FwdGFpbiBOJ2doYXRocm9kIn0sImh1Yk5hbWUiOiIifQ%3D%3D";
     private int _scrapeCount = 1;
     private List<DeckInfo> _deckList = new();
     private string _errorMessage = string.Empty;
+    private Process? _chromeProcess;
 
     protected override void OnInitialized()
     {
         _deckList = new List<DeckInfo>()
         {
-            new("Title 1", "URL 1", '$' , 24.24, "5m ago", 1000, 4200),
-            new("Title 2", "URL 2", '$' , 14.24, "5m ago", 50, 450),
-            new("Title 3", "URL 3", '$' , 54.24, "5m ago", 80, 320),
-            new("Title 4", "URL 4", '$' , 16.24, "5m ago", 20, 720),
+            new("Title 1", "URL 1", '$', 24.24, "5m ago", 1000, 4200),
+            new("Title 2", "URL 2", '$', 14.24, "5m ago", 50, 450),
+            new("Title 3", "URL 3", '$', 54.24, "5m ago", 80, 320),
+            new("Title 4", "URL 4", '$', 16.24, "5m ago", 20, 720),
         };
+    }
+
+    private void StartChromeWithRemoteDebugging()
+    {
+        var chromeUserDataPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Google", "Chrome",
+            "User Data", Preferences.ChromeUserDataProfileName);
+        _chromeProcess = Process.Start(Preferences.ChromeExecutablePath,
+            $"--remote-debugging-port={Preferences.ChromeRemoteDebuggingPort} --user-data-dir=\"{chromeUserDataPath}\"");
+
+        Thread.Sleep(5000);
     }
 
     private async Task ScrapeDeckList()
@@ -101,6 +118,12 @@
         {
             _errorMessage = e.Message;
         }
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _chromeProcess?.Dispose();
+        return ValueTask.CompletedTask;
     }
 
 }

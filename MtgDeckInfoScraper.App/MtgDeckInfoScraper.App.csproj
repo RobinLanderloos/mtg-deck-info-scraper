@@ -20,10 +20,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <EnableDefaultCssItems>false</EnableDefaultCssItems>
         <Nullable>enable</Nullable>
-        <WindowsPackageType>None</WindowsPackageType>
 
         <!-- Display name -->
-        <ApplicationTitle>MtgDeckInfoScraper</ApplicationTitle>
+        <ApplicationTitle>MtgDeckInfoScraper.App</ApplicationTitle>
 
         <!-- App Identifier -->
         <ApplicationId>com.companyname.mtgdeckinfoscraper.app</ApplicationId>
