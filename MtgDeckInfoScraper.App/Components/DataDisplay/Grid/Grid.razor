@@ -25,7 +25,8 @@
     [Parameter] public RenderFragment GridHeaders { get; set; } = null!;
     [Parameter] public RenderFragment<TModel> GridRowTemplate { get; set; } = null!;
 
-    public readonly Dictionary<string, bool> SortProperties = new();
+    public string SortProperty = string.Empty;
+    public bool SortAscending = true;
 
     public void SortBy(string propertyName)
     {
@@ -34,57 +35,31 @@
             return;
         }
 
-// If the key is not yet present, add it and set it to true (ascending)
-        if (SortProperties.TryAdd(propertyName, true))
+        if (!string.Equals(SortProperty, propertyName))
         {
+            SortProperty = propertyName;
+            SortAscending = true;
         }
-// If the key is already set and is set to false, we have clicked for the third time, so we want to remove it from the sorting
-        else if (!SortProperties[propertyName])
+        else if (SortAscending) // Reverse sort direction on double click 
         {
-            SortProperties.Remove(propertyName);
+            SortAscending = false;
         }
-// Else we just toggle the value to sort descending
-        else
+        else // Disable sorting if we clicked on the same column three times 
         {
-            SortProperties[propertyName] = false;
-        }
-
-        if (!SortProperties.Any())
-        {
-            return;
+            SortProperty = string.Empty;
         }
 
         var modelQueryable = ModelList.AsQueryable();
 
-        var firstSort = SortProperties.First();
         var property = typeof(TModel).GetProperty(propertyName);
         if (property == null)
         {
             return;
         }
 
-        if (firstSort.Value)
-        {
-            modelQueryable = modelQueryable.OrderBy(x => property.GetValue(x));
-        }
-        else
-        {
-            modelQueryable = modelQueryable.OrderByDescending(x => property.GetValue(x));
-        }
-
-        foreach (var sortProperty in SortProperties.Skip(1))
-        {
-            Console.WriteLine($"Sorting by: {sortProperty.Key} {sortProperty.Value}");
-
-            if (sortProperty.Value)
-            {
-                modelQueryable = ((IOrderedQueryable<TModel>)modelQueryable).ThenBy(x => property.GetValue(x));
-            }
-            else
-            {
-                modelQueryable = ((IOrderedQueryable<TModel>)modelQueryable).ThenByDescending(x => property.GetValue(x));
-            }
-        }
+        modelQueryable = SortAscending ?
+            modelQueryable.OrderBy(x => property.GetValue(x)) :
+            modelQueryable.OrderByDescending(x => property.GetValue(x));
 
         ModelList = modelQueryable.ToList();
 

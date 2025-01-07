@@ -8,12 +8,14 @@ public class DeckInfo
 	public string Title { get; private set; }
 	public string Url { get; private set; }
 	public double Price { get; private set; }
+	public char PriceSymbol { get; private set; }
 	public string LastUpdated { get; private set; }
 	public int Likes { get; private set; }
 	public int Views { get; private set; }
 
 	public DeckInfo(string title,
 		string url,
+		char priceSymbol,
 		double price,
 		string lastUpdated,
 		int likes,
@@ -22,6 +24,7 @@ public class DeckInfo
 		Id = Guid.NewGuid();
 		Title = title;
 		Url = url;
+		PriceSymbol = priceSymbol;
 		Price = price;
 		LastUpdated = lastUpdated;
 		Likes = likes;
@@ -32,6 +35,7 @@ public class DeckInfo
 	private DeckInfo(Guid id,
 		string title,
 		string url,
+		char priceSymbol,
 		double price,
 		string lastUpdated,
 		int likes,
@@ -40,6 +44,7 @@ public class DeckInfo
 		Id = id;
 		Title = title;
 		Url = url;
+		PriceSymbol = priceSymbol;
 		Price = price;
 		LastUpdated = lastUpdated;
 		Likes = likes;
@@ -48,6 +53,6 @@ public class DeckInfo
 
 	public override string ToString()
 	{
-		return $"{Title} ({Price:C}), {Likes} likes, {Views} views, last updated {LastUpdated}, url: {Url}";
+		return $"{Title} ({PriceSymbol}{Price}), {Likes} likes, {Views} views, last updated {LastUpdated}, url: {Url}";
 	}
 }

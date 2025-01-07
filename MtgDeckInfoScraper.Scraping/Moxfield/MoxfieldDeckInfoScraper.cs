@@ -18,10 +18,20 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
 
     public async Task<List<DeckInfo>> ScrapeDeckList(string deckListUrl, int count = 10)
     {
+        using var playwright = await Playwright.CreateAsync();
+        _logger.LogDebug("Playwright instance created.");
+
+        await using var browser = await playwright.Chromium.ConnectOverCDPAsync("http://localhost:9222", new()
+        {
+            SlowMo = 1000,
+        });
+
         _logger.LogInformation("Starting to scrape deck list from URL: {DeckListUrl} with count: {Count}", deckListUrl,
             count);
 
-        var deckLinks = await ScrapeDeckLinks(deckListUrl);
+        var existingBrowserContext = browser.Contexts[0];
+
+        var deckLinks = await ScrapeDeckLinks(existingBrowserContext, deckListUrl);
         _logger.LogInformation("Retrieved {DeckLinkCount} deck links", deckLinks.Count);
 
         var toCheck = count > deckLinks.Count ? deckLinks : deckLinks.Take(count);
@@ -43,7 +53,7 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
 
                 scrapeTasks.Add(Task.Run(async () =>
                 {
-                    var info = await NavigateToAndScrapeDeckInfo(deckLink);
+                    var info = await NavigateToAndScrapeDeckInfo(existingBrowserContext, deckLink);
                     _logger.LogDebug("Scraped deck info for {DeckNumber}: {DeckInfo}", currentDeckCount, info);
                     lock (deckList)
                     {
@@ -59,37 +69,17 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
         return deckList;
     }
 
-    private async Task SignIn(IPage page)
-    {
-        await page.Locator("a").Filter(new() { HasText = "Sign In" }).ClickAsync();
-        await page.WaitForSelectorAsync("input[id='username']");
-        // Wait for use input...
-        await Task.Delay(30000);
-        await page.Locator("span").Filter(new() { HasText = "Sign In" }).ClickAsync();
-    }
 
-    private async Task<DeckInfo> NavigateToAndScrapeDeckInfo(string deckUrl)
+    private async Task<DeckInfo> NavigateToAndScrapeDeckInfo(IBrowserContext browserContext, string deckUrl)
     {
         _logger.LogInformation("Navigating to deck URL: {DeckUrl}", deckUrl);
 
-        var userDataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Google\\Chrome\\User Data\\Default");
-
-        using var playwright = await Playwright.CreateAsync();
-        _logger.LogDebug("Playwright instance created.");
-
-        await using var browser = await playwright.Chromium.LaunchPersistentContextAsync(userDataDir, new()
-        {
-            Headless = Headless,
-            SlowMo = 1000,
-        });
         _logger.LogDebug("Chromium browser launched with headless mode: {HeadlessMode}", Headless);
 
-        var page = await browser.NewPageAsync();
+        var page = await browserContext.NewPageAsync();
         _logger.LogDebug("New browser page created.");
         _logger.LogInformation("Navigating to the URL: {DeckUrl}", deckUrl);
         await page.GotoAsync(deckUrl);
-
-        // await SignIn(page);
 
         _logger.LogDebug("Waiting for selector 'article[class=\"deckview\"]' to be available.");
         await page.WaitForSelectorAsync("section[class='deckview']");
@@ -115,23 +105,21 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
         var views = await ScrapeViews(page);
         _logger.LogDebug("Deck views scraped: {Views}", views);
 
-        var deckInfo = new DeckInfo(title, deckUrl, price, lastUpdated, likes, views);
+        await page.CloseAsync();
+
+        var deckInfo = new DeckInfo(title, deckUrl, price.Item1, price.Item2, lastUpdated, likes, views);
         _logger.LogDebug("Constructed DeckInfo object: {DeckInfo}", deckInfo);
 
         return deckInfo;
     }
 
-    private async Task<List<string>> ScrapeDeckLinks(string deckListUrl)
+    private async Task<List<string>> ScrapeDeckLinks(IBrowserContext browserContext, string deckListUrl)
     {
         _logger.LogInformation("Scraping deck links from URL: {DeckListUrl}", deckListUrl);
 
         using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync(new()
-        {
-            Headless = Headless,
-        });
 
-        var page = await browser.NewPageAsync();
+        var page = await browserContext.NewPageAsync();
         await page.GotoAsync(deckListUrl);
 
         await page.WaitForSelectorAsync("div[class='browse-ad-layout']");
@@ -144,9 +132,13 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
             .Where(link => link is not null && link.Contains("/decks/") &&
                            !link.Contains("/decks/public") &&
                            !link.Contains("/decks/liked") &&
-                           !link.Contains("/decks/following"))
+                           !link.Contains("/decks/following") &&
+                           !link.Contains("/decks/personal") &&
+                           !link.Contains("/decks/private"))
             .Select(link => "https://www.moxfield.com" + link)
             .ToList();
+
+        await page.CloseAsync();
 
         _logger.LogInformation("Retrieved {ValidLinkCount} valid deck links", validLinks.Count);
         return validLinks;
@@ -176,7 +168,11 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
         try
         {
             var element = await page.QuerySelectorAsync(selector);
-            return await element?.TextContentAsync() ?? defaultValue;
+
+            if (element is null) return defaultValue;
+
+            var text = await element.TextContentAsync();
+            return text ?? defaultValue;
         }
         catch (Exception ex)
         {
@@ -186,31 +182,38 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
         }
     }
 
-    private async Task<double> ScrapeDeckPrice(IPage page)
+    private async Task<(char, double)> ScrapeDeckPrice(IPage page)
     {
         _logger.LogInformation("Scraping deck price...");
         try
         {
-            await page.Locator("a").Filter(new() { HasText = "BuyDeck" }).ClickAsync();
+            var priceText = await SafeScrape(page, "span[id='shoppingcart']", "price", "$0");
+            char symbol = '$';
+            double price = 0;
 
-            var buyNowLocator = page.GetByRole(AriaRole.Button, new() { Name = "Buy Now for" });
-            await buyNowLocator.WaitForAsync();
-            await page.Locator("label").Filter(new() { HasText = "TCGplayer" }).ClickAsync();
+            if (priceText.Contains('$'))
+            {
+                var dollarIndex = priceText.IndexOf('$');
+                var priceSubstring = priceText.Substring(dollarIndex + 1).Trim();
+                price = Convert.ToDouble(priceSubstring, new CultureInfo("en-US"));
+                symbol = '$';
+            }
+            else if (priceText.Contains("\u20ac")) // Euro symbol
+            {
+                var euroIndex = priceText.IndexOf('\u20ac');
+                var priceSubstring = priceText.Substring(euroIndex + 1).Trim();
+                price = Convert.ToDouble(priceSubstring, new CultureInfo("en-US"));
+                symbol = '\u20ac';
+            }
 
-            var buyNowForText = await buyNowLocator.TextContentAsync();
-            if (buyNowForText is null) return 0;
+            _logger.LogDebug("Scraped price: {Symbol}{Price}", symbol, price);
 
-            var dollarIndex = buyNowForText.IndexOf('$');
-            var priceSubstring = buyNowForText.Substring(dollarIndex + 1).Trim();
-            var price = Convert.ToDouble(priceSubstring, new CultureInfo("en-US"));
-            _logger.LogDebug("Scraped price: ${Price}", price);
-
-            return price;
+            return (symbol, price);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to scrape deck price. Returning default value of 0.");
-            return 0;
+            return ('$', 0);
         }
     }
 }

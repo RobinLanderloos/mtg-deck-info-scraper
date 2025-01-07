@@ -48,7 +48,8 @@
                 <a href="@context.Url" target="_blank">@context.Title</a>
             </td>
             <td>
-                @context.Price.ToString("C", new CultureInfo("en-US"))
+                @context.PriceSymbol
+                @context.Price.ToString(CultureInfo.InvariantCulture)
             </td>
             <td>
                 @context.Likes.ToString()
@@ -75,10 +76,10 @@
     {
         _deckList = new List<DeckInfo>()
         {
-            new("Title 1", "URL 1", 24.24, "5m ago", 1000, 4200),
-            new("Title 2", "URL 2", 14.24, "5m ago", 50, 450),
-            new("Title 3", "URL 3", 54.24, "5m ago", 80, 320),
-            new("Title 4", "URL 4", 16.24, "5m ago", 20, 720),
+            new("Title 1", "URL 1", '$' , 24.24, "5m ago", 1000, 4200),
+            new("Title 2", "URL 2", '$' , 14.24, "5m ago", 50, 450),
+            new("Title 3", "URL 3", '$' , 54.24, "5m ago", 80, 320),
+            new("Title 4", "URL 4", '$' , 16.24, "5m ago", 20, 720),
         };
     }
 

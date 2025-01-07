@@ -18,16 +18,9 @@ public class DeckInfoScraperFactory
     {
         return site switch
         {
-            SupportedSites.Moxfield => new MoxfieldDeckInfoScraper(_serviceProvider
-                .GetRequiredService<ILogger<MoxfieldDeckInfoScraper>>()),
+            SupportedSites.Moxfield => _serviceProvider.GetRequiredService<MoxfieldDeckInfoScraper>(),
             _ => throw new NotImplementedException()
         };
-    }
-    
-    private MoxfieldDeckInfoScraper CreateMoxfieldDeckInfoScraper()
-    {
-        var logger = _serviceProvider.GetRequiredService<ILogger<MoxfieldDeckInfoScraper>>();
-        return new MoxfieldDeckInfoScraper(logger);
     }
 }
 

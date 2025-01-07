@@ -25,10 +25,11 @@ public static class MauiProgram
         builder.Services.AddBlazorWebViewDeveloperTools();
         builder.Logging.AddDebug();
 #endif
+        
         var exitCode = Microsoft.Playwright.Program.Main(new[] { "install" });
         if (exitCode != 0)
         {
-            throw new Exception($"Playwright exited with code {exitCode}");
+            throw new InvalidOperationException($"Playwright exited with code {exitCode}");
         }
 
         return builder.Build();

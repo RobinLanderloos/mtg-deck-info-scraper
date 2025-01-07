@@ -20,9 +20,10 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <EnableDefaultCssItems>false</EnableDefaultCssItems>
         <Nullable>enable</Nullable>
+        <WindowsPackageType>None</WindowsPackageType>
 
         <!-- Display name -->
-        <ApplicationTitle>MtgDeckInfoScraper.App</ApplicationTitle>
+        <ApplicationTitle>MtgDeckInfoScraper</ApplicationTitle>
 
         <!-- App Identifier -->
         <ApplicationId>com.companyname.mtgdeckinfoscraper.app</ApplicationId>
@@ -65,12 +66,12 @@
     </ItemGroup>
 
     <ItemGroup>
-      <AdditionalFiles Include="Components\DataDisplay\Grid\Grid.razor" />
-      <AdditionalFiles Include="Components\DataDisplay\Grid\GridHeader.razor" />
+        <AdditionalFiles Include="Components\DataDisplay\Grid\Grid.razor"/>
+        <AdditionalFiles Include="Components\DataDisplay\Grid\GridHeader.razor"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\MtgDeckInfoScraper.Scraping\MtgDeckInfoScraper.Scraping.csproj" />
+        <ProjectReference Include="..\MtgDeckInfoScraper.Scraping\MtgDeckInfoScraper.Scraping.csproj"/>
     </ItemGroup>
 
 </Project>

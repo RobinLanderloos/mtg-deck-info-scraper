@@ -5,9 +5,9 @@
     @onclick="OnClick">
     <span>
         <small>
-            @if (Grid.SortProperties.TryGetValue(PropertyName ?? string.Empty, out var sortingDirection))
+            @if (string.Equals(Grid.SortProperty, PropertyName, StringComparison.OrdinalIgnoreCase))
             {
-                @(sortingDirection ? "▲" : "▼")
+                @(Grid.SortAscending ? "▲" : "▼")
             }
         </small>
     </span>
