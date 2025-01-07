@@ -1,5 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
+using MtgDeckInfoScraper.App.Preferences;
 using MtgDeckInfoScraper.Scraping;
+using MtgDeckInfoScraper.Scraping.Moxfield;
+using MtgDeckInfoScraper.Scraping.Options;
 
 namespace MtgDeckInfoScraper.App;
 
@@ -18,7 +21,8 @@ public static class MauiProgram
         {
             logging.AddDebug();
         });
-        
+
+        builder.Services.AddSingleton<IMtgDeckInfoScraperOptions, MtgDeckInfoScraperOptions>();
         builder.Services.RegisterScrapers();
 
 #if DEBUG

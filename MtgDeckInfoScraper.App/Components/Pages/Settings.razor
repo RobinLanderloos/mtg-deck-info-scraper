@@ -1,4 +1,5 @@
 ﻿@page "/Settings"
+@using MtgDeckInfoScraper.App.Preferences
 @using MtgDeckInfoScraper.Scraping.Moxfield
 <h3>Settings</h3>
 
@@ -6,23 +7,23 @@
     <label class="label">
         Chrome Remote Debugging Port
     </label>
-    <input id="chromeRemoteDebuggingPort" type="number" class="input input-bordered" @bind="Preferences.ChromeRemoteDebuggingPort"/>
+    <input id="chromeRemoteDebuggingPort" type="number" class="input input-bordered" @bind="Options.ChromeRemoteDebuggingPort"/>
 </div>
 
 <div class="form-control">
     <label class="label">
         Chrome Executable Path
     </label>
-    <input id="chromeExecutablePath" type="text" class="input input-bordered" @bind="Preferences.ChromeExecutablePath"/>
+    <input id="chromeExecutablePath" type="text" class="input input-bordered" @bind="Options.ChromeExecutablePath"/>
 </div>
 
 <div class="form-control">
     <label class="label">
         Chrome User Data Profile Name
     </label>
-    <input id="chromeUserDataProfileName" type="text" class="input input-bordered" @bind="Preferences.ChromeUserDataProfileName"/>
+    <input id="chromeUserDataProfileName" type="text" class="input input-bordered" @bind="Options.ChromeUserDataProfileName"/>
 </div>
 
 @code {
-    [Inject] public MtgDeckInfoScraperPreferences Preferences { get; set; } = null!;
+    [Inject] public MtgDeckInfoScraperOptions Options { get; set; } = null!;
 }
