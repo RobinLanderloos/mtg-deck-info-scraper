@@ -4,9 +4,9 @@
 @using MtgDeckInfoScraper.Scraping
 @using MtgDeckInfoScraper.Scraping.Models
 @using MtgDeckInfoScraper.Scraping.Options
+@using MtgDeckInfoScraper.App.Components.Headers
 
-<h1 class="text-3xl font-bold mb-5">Moxfield</h1>
-
+<PageHeader Title="Moxfield"/>
 
 <div class="mb-5 space-y-4">
     <div class="form-control">
@@ -14,13 +14,13 @@
             <span class="label-text">Decklist URL</span>
         </label>
         <input id="url" type="text" @bind="_url" placeholder="Provide a URL to a deck list"
-               class="input input-bordered" />
+               class="input input-bordered"/>
     </div>
     <div class="form-control">
         <label class="label">
             <span class="label-text">Scrape Count</span>
         </label>
-        <input id="scrapeCount" type="number" class="input input-bordered" @bind="_scrapeCount" />
+        <input id="scrapeCount" type="number" class="input input-bordered" @bind="_scrapeCount"/>
     </div>
     <button class="btn btn-secondary w-full" @onclick="ScrapeDeckList" type="submit">Scrape</button>
 </div>
@@ -51,7 +51,12 @@
         </GridHeaders>
         <GridRowTemplate>
             <td>
-                <a href="@context.Url" target="_blank" class="text-blue-600 hover:underline">@context.Title</a>
+                <a href="@context.Url" target="_blank" class="hover:underline text-primary">
+                    <span class="mr-2">
+                        @context.Title
+                    </span>
+                    <i class="fa-solid fa-link"></i>
+                </a>
             </td>
             <td>
                 @context.PriceSymbol
@@ -68,7 +73,7 @@
     [Inject] public DeckInfoScraperFactory DeckInfoScraperFactory { get; set; } = null!;
     [Inject] public IMtgDeckInfoScraperOptions Options { get; set; } = null!;
     [Inject] public CurrentScrapeProvider CurrentScrapeProvider { get; set; } = null!;
-    
+
 
     private string? _url = "";
     private int _scrapeCount = 10;
