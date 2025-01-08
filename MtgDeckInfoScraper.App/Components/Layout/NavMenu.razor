@@ -1,22 +1,48 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">MtgDeckInfoScraper.App</a>
+﻿@using System.Diagnostics
+@using MtgDeckInfoScraper.Scraping.Options
+@implements IAsyncDisposable
+
+<div class="w-64 bg-base-200 sticky-top text-base-content h-screen sticky top-0">
+    <div class="flex flex-col bg-base-200 text-base-content px-2 py-2 h-full">
+        <nav class="flex flex-col">
+            <NavMenuLink Text="Scrape" Href="">
+                <Icon>
+                    <i class="fa-solid fa-bolt"></i>
+                </Icon>
+            </NavMenuLink>
+            <NavMenuLink Text="Settings" Href="Settings">
+                <Icon>
+                    <i class="fa-solid fa-gear"></i>
+                </Icon>
+            </NavMenuLink>
+        </nav>
+
+        <button class="mt-auto btn btn-primary" @onclick="StartChromeWithRemoteDebugging">
+            Start Chrome
+        </button>
+
     </div>
 </div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler"/>
+@code {
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="Settings" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Settings 
-            </NavLink>
-        </div>
-    </nav>
-</div>
+    [Inject] public IMtgDeckInfoScraperOptions Options { get; set; } = null!;
+    private Process? _chromeProcess;
+
+    private void StartChromeWithRemoteDebugging()
+    {
+        var chromeUserDataPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Google", "Chrome",
+            "User Data", Options.ChromeUserDataProfileName);
+        _chromeProcess = Process.Start(Options.ChromeExecutablePath,
+            $"--remote-debugging-port={Options.ChromeRemoteDebuggingPort} --user-data-dir=\"{chromeUserDataPath}\"");
+    }
+
+
+    public ValueTask DisposeAsync()
+    {
+        _chromeProcess?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+
+}

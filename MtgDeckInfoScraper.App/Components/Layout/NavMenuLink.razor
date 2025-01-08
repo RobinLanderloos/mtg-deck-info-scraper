@@ -1,0 +1,18 @@
+﻿<div class="pb-1">
+    <NavLink
+        class="flex items-center text-sm text-gray-300 hover:text-white nav-item p-2"
+        href="@Href"
+        ActiveClass="text-white font-bold bg-base-300 rounded-md shadow-md"
+        Match="@Match">
+        <span class="pr-2">@Icon</span> @Text
+    </NavLink>
+</div>
+
+@code {
+
+    [Parameter, EditorRequired] public string? Text { get; set; }
+    [Parameter, EditorRequired] public string? Href { get; set; }
+    [Parameter, EditorRequired] public RenderFragment? Icon { get; set; }
+    [Parameter] public NavLinkMatch Match { get; set; } = NavLinkMatch.All;
+
+}

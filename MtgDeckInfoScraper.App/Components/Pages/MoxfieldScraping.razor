@@ -1,33 +1,28 @@
 ﻿@page "/"
-@implements IAsyncDisposable
-
-@using System.Diagnostics
 @using System.Globalization
-@using MtgDeckInfoScraper.App.Preferences
+@using MtgDeckInfoScraper.App.LocalStorage
 @using MtgDeckInfoScraper.Scraping
 @using MtgDeckInfoScraper.Scraping.Models
-@using MtgDeckInfoScraper.Scraping.Moxfield
 @using MtgDeckInfoScraper.Scraping.Options
 
-<h1 class="text-3xl font-bold mb-5">Moxfield Scraper</h1>
+<h1 class="text-3xl font-bold mb-5">Moxfield</h1>
 
-<button class="btn btn-primary" @onclick="StartChromeWithRemoteDebugging">Start Chrome with remote debugging</button>
 
-<div class="mb-5">
+<div class="mb-5 space-y-4">
     <div class="form-control">
         <label class="label">
-            Decklist URL
+            <span class="label-text">Decklist URL</span>
         </label>
         <input id="url" type="text" @bind="_url" placeholder="Provide a URL to a deck list"
-               class="input input-bordered"/>
+               class="input input-bordered" />
     </div>
     <div class="form-control">
         <label class="label">
-            Scrape Count
+            <span class="label-text">Scrape Count</span>
         </label>
-        <input id="scrapeCount" type="number" class="input input-bordered" @bind="_scrapeCount"/>
+        <input id="scrapeCount" type="number" class="input input-bordered" @bind="_scrapeCount" />
     </div>
-    <button class="btn" @onclick="ScrapeDeckList" type="submit">Scrape</button>
+    <button class="btn btn-secondary w-full" @onclick="ScrapeDeckList" type="submit">Scrape</button>
 </div>
 
 @if (_deckList.Count > 0)
@@ -37,35 +32,34 @@
     @if (!string.IsNullOrEmpty(_errorMessage))
     {
         <div>
-            <p class="text-red-500 font-bold">@_errorMessage</p>
+            <p class="text-error font-bold">@_errorMessage</p>
         </div>
     }
 
     <Grid ModelList="_deckList">
         <GridHeaders>
-            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Title)" Sortable="@true"></GridHeader>
-            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Price)" Sortable="@true"></GridHeader>
-            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Likes)" Sortable="@true"></GridHeader>
-            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Views)" Sortable="@true"></GridHeader>
-            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.LastUpdated)"></GridHeader>
+            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Title)" Sortable="@true">
+            </GridHeader>
+            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Price)" Sortable="@true">
+            </GridHeader>
+            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Likes)" Sortable="@true">
+            </GridHeader>
+            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Views)" Sortable="@true">
+            </GridHeader>
+            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.LastUpdated)">
+            </GridHeader>
         </GridHeaders>
         <GridRowTemplate>
             <td>
-                <a href="@context.Url" target="_blank">@context.Title</a>
+                <a href="@context.Url" target="_blank" class="text-blue-600 hover:underline">@context.Title</a>
             </td>
             <td>
                 @context.PriceSymbol
                 @context.Price.ToString(CultureInfo.InvariantCulture)
             </td>
-            <td>
-                @context.Likes.ToString()
-            </td>
-            <td>
-                @context.Views.ToString()
-            </td>
-            <td>
-                @context.LastUpdated
-            </td>
+            <td>@context.Likes.ToString()</td>
+            <td>@context.Views.ToString()</td>
+            <td>@context.LastUpdated</td>
         </GridRowTemplate>
     </Grid>
 }
@@ -73,27 +67,23 @@
 @code {
     [Inject] public DeckInfoScraperFactory DeckInfoScraperFactory { get; set; } = null!;
     [Inject] public IMtgDeckInfoScraperOptions Options { get; set; } = null!;
+    [Inject] public CurrentScrapeProvider CurrentScrapeProvider { get; set; } = null!;
+    
 
-    private string? _url = "https://moxfield.com/decks/public?q=eyJodWIiOiIiLCJmb3JtYXQiOiIiLCJkZWNrTmFtZSI6IiIsImNhcmRJZCI6IiIsImNhcmROYW1lIjoiIiwiYm9hcmQiOiIiLCJsYXN0U2VhcmNoIjoiIiwiZmlsdGVyIjoiIiwiY29tbWFuZGVyQ2FyZElkIjoicjg0YjEiLCJjb21tYW5kZXJDYXJkTmFtZSI6IkNhcHRhaW4gTidnaGF0aHJvZCIsInBhcnRuZXJDYXJkSWQiOiIiLCJwYXJ0bmVyQ2FyZE5hbWUiOiIiLCJjb21tYW5kZXJTaWduYXR1cmVTcGVsbENhcmRJZCI6IiIsImNvbW1hbmRlclNpZ25hdHVyZVNwZWxsQ2FyZE5hbWUiOiIiLCJwYXJ0bmVyU2lnbmF0dXJlU3BlbGxDYXJkSWQiOiIiLCJwYXJ0bmVyU2lnbmF0dXJlU3BlbGxDYXJkTmFtZSI6IiIsImNvbXBhbmlvbkNhcmRJZCI6IiIsImNvbXBhbmlvbkNhcmROYW1lIjoiIiwiY29tbWFuZXJUaWVyU2V0dGluZyI6ImVxdWFscyIsImNvbW1hbmVyVGllciI6IiIsImRlY2tUaWVyU2V0dGluZyI6ImVxdWFscyIsImRlY2tUaWVyIjoiIiwic29ydENvbHVtbiI6InZpZXdzIiwic29ydERpcmVjdGlvbiI6ImRlc2NlbmRpbmciLCJwYWdlTnVtYmVyIjoxLCJwYWdlU2l6ZSI6NjQsInZpZXciOiJwdWJsaWMiLCJzZWxlY3RlZENhcmRJZHMiOnsiY29tbWFuZGVyQ2FyZElkIjoicjg0YjEifSwic2VsZWN0ZWRDYXJkTmFtZXMiOnsiY29tbWFuZGVyQ2FyZElkIjoiQ2FwdGFpbiBOJ2doYXRocm9kIn0sImh1Yk5hbWUiOiIifQ%3D%3D";
+    private string? _url = "";
     private int _scrapeCount = 10;
     private List<DeckInfo> _deckList = new();
     private string _errorMessage = string.Empty;
-    private Process? _chromeProcess;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        var existingDeckList = await CurrentScrapeProvider.GetCurrentScrape();
+        if (existingDeckList != null)
+        {
+            _deckList = existingDeckList;
+        }
     }
 
-    private void StartChromeWithRemoteDebugging()
-    {
-        var chromeUserDataPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Google", "Chrome",
-            "User Data", Options.ChromeUserDataProfileName);
-        _chromeProcess = Process.Start(Options.ChromeExecutablePath,
-            $"--remote-debugging-port={Options.ChromeRemoteDebuggingPort} --user-data-dir=\"{chromeUserDataPath}\"");
-
-        Thread.Sleep(5000);
-    }
 
     private async Task ScrapeDeckList()
     {
@@ -108,17 +98,12 @@
         try
         {
             _deckList = await scraper.ScrapeDeckList(_url, _scrapeCount);
+            await CurrentScrapeProvider.SetCurrentScrape(_deckList);
         }
         catch (Exception e)
         {
             _errorMessage = e.Message;
         }
-    }
-
-    public ValueTask DisposeAsync()
-    {
-        _chromeProcess?.Dispose();
-        return ValueTask.CompletedTask;
     }
 
 }

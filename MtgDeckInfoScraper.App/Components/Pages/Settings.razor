@@ -1,29 +1,41 @@
 ﻿@page "/Settings"
-@using MtgDeckInfoScraper.App.Preferences
-@using MtgDeckInfoScraper.Scraping.Moxfield
-<h3>Settings</h3>
+@using MtgDeckInfoScraper.Scraping.Options
 
-<div class="form-control">
+<h3 class="text-xl font-bold mb-4">Settings</h3>
+
+<div class="form-control mb-4">
     <label class="label">
-        Chrome Remote Debugging Port
+        <span class="label-text">Chrome Remote Debugging Port</span>
     </label>
-    <input id="chromeRemoteDebuggingPort" type="number" class="input input-bordered" @bind="Options.ChromeRemoteDebuggingPort"/>
+    <input
+        id="chromeRemoteDebuggingPort"
+        type="number"
+        class="input input-bordered"
+        @bind="Options.ChromeRemoteDebuggingPort"/>
 </div>
 
-<div class="form-control">
+<div class="form-control mb-4">
     <label class="label">
-        Chrome Executable Path
+        <span class="label-text">Chrome Executable Path</span>
     </label>
-    <input id="chromeExecutablePath" type="text" class="input input-bordered" @bind="Options.ChromeExecutablePath"/>
+    <input
+        id="chromeExecutablePath"
+        type="text"
+        class="input input-bordered"
+        @bind="Options.ChromeExecutablePath"/>
 </div>
 
-<div class="form-control">
+<div class="form-control mb-4">
     <label class="label">
-        Chrome User Data Profile Name
+        <span class="label-text">Chrome User Data Profile Name</span>
     </label>
-    <input id="chromeUserDataProfileName" type="text" class="input input-bordered" @bind="Options.ChromeUserDataProfileName"/>
+    <input
+        id="chromeUserDataProfileName"
+        type="text"
+        class="input input-bordered"
+        @bind="Options.ChromeUserDataProfileName"/>
 </div>
 
 @code {
-    [Inject] public MtgDeckInfoScraperOptions Options { get; set; } = null!;
+    [Inject] public IMtgDeckInfoScraperOptions Options { get; set; } = null!;
 }

@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Blazored.LocalStorage;
+using Microsoft.Extensions.Logging;
+using MtgDeckInfoScraper.App.LocalStorage;
 using MtgDeckInfoScraper.App.Preferences;
 using MtgDeckInfoScraper.Scraping;
 using MtgDeckInfoScraper.Scraping.Moxfield;
@@ -24,6 +26,7 @@ public static class MauiProgram
 
         builder.Services.AddSingleton<IMtgDeckInfoScraperOptions, MtgDeckInfoScraperOptions>();
         builder.Services.RegisterScrapers();
+        builder.Services.RegisterLocalStorageAccess();
 
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();
@@ -37,5 +40,13 @@ public static class MauiProgram
         }
 
         return builder.Build();
+    }
+    
+    private static IServiceCollection RegisterLocalStorageAccess(this IServiceCollection services)
+    {
+        services.AddBlazoredLocalStorage();
+        services.AddScoped<ILocalStorageAccessor, BlazoredLocalStorageAccessor>();
+        services.AddScoped<CurrentScrapeProvider>();
+        return services;
     }
 }
