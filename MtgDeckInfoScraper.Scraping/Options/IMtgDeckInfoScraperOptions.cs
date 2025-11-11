@@ -19,4 +19,14 @@ public interface IMtgDeckInfoScraperOptions
 	/// `C:\Users\{username}\AppData\Local\Google\Chrome\User Data\{ChromeUserDataProfileName}`
 	/// </summary>
 	string ChromeUserDataProfileName { get; set; }
+
+	/// <summary>
+	/// The max amount of concurrent mox field scraping operations
+	/// </summary>
+	int MoxfieldMaxConcurrentScrapes { get; set; }
+
+	/// <summary>
+	/// The max amount of concurrent archidekt scraping operations
+	/// </summary>
+	int ArchidektMaxConcurrentScrapes { get; set; }
 }

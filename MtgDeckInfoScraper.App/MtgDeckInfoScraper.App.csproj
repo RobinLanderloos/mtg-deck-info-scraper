@@ -1,9 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
     <PropertyGroup>
-        <TargetFrameworks>net8.0-android;net8.0-ios;net8.0-maccatalyst</TargetFrameworks>
+        <!--        <TargetFrameworks>net8.0-android;net8.0-ios;net8.0-maccatalyst</TargetFrameworks>-->
         <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net8.0-windows10.0.19041.0</TargetFrameworks>
-        <!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
         <!-- <TargetFrameworks>$(TargetFrameworks);net8.0-tizen</TargetFrameworks> -->
 
         <!-- Note for MacCatalyst:
@@ -22,21 +21,33 @@
         <Nullable>enable</Nullable>
 
         <!-- Display name -->
-        <ApplicationTitle>MtgDeckInfoScraper.App</ApplicationTitle>
+        <ApplicationTitle>MTG Deck Scraper</ApplicationTitle>
 
         <!-- App Identifier -->
-        <ApplicationId>com.companyname.mtgdeckinfoscraper.app</ApplicationId>
+        <ApplicationId>com.stackwise.mtgdeckscraper.app</ApplicationId>
 
         <!-- Versions -->
-        <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-        <ApplicationVersion>1</ApplicationVersion>
+        <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
+        <ApplicationVersion>2</ApplicationVersion>
 
-        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">14.2</SupportedOSPlatformVersion>
-        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">14.0</SupportedOSPlatformVersion>
-        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
+        <!--        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">14.2</SupportedOSPlatformVersion>-->
+        <!--        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">14.0</SupportedOSPlatformVersion>-->
+        <!--        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>-->
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
         <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
-        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
+        <Company>Stackwise</Company>
+        <Product>MTG Deck Scraper</Product>
+        <!--        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>-->
+    </PropertyGroup>
+
+    <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and '$(Configuration)' == 'Release'">
+        <ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
+        <ApplicationVersion>2</ApplicationVersion>
+        <AppxPackageSigningEnabled>true</AppxPackageSigningEnabled>
+        <PackageCertificateThumbprint>AB38160D9A776F2ECF83F3EB5ABE35D17A616C37</PackageCertificateThumbprint>
+    </PropertyGroup>
+    <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and '$(RuntimeIdentifierOverride)' != ''">
+        <RuntimeIdentifier>$(RuntimeIdentifierOverride)</RuntimeIdentifier>
     </PropertyGroup>
 
     <ItemGroup>
@@ -58,7 +69,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
+        <PackageReference Include="Blazored.LocalStorage" Version="4.5.0"/>
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)"/>
         <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)"/>
         <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)"/>
@@ -73,9 +84,9 @@
     <ItemGroup>
         <ProjectReference Include="..\MtgDeckInfoScraper.Scraping\MtgDeckInfoScraper.Scraping.csproj"/>
     </ItemGroup>
-    
+
     <ItemGroup>
-      <Folder Include="wwwroot\lib\" />
+        <Folder Include="wwwroot\lib\"/>
     </ItemGroup>
 
 </Project>

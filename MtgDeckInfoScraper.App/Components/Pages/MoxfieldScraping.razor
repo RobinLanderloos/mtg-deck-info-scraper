@@ -1,40 +1,41 @@
 ﻿@page "/"
 @using System.Globalization
+@using Microsoft.Playwright
 @using MtgDeckInfoScraper.App.LocalStorage
 @using MtgDeckInfoScraper.Scraping
 @using MtgDeckInfoScraper.Scraping.Models
-@using MtgDeckInfoScraper.Scraping.Options
-@using MtgDeckInfoScraper.App.Components.Headers
 
-<PageHeader Title="Moxfield"/>
+<PageHeader Title="Scrape"/>
 
-<div class="mb-5 space-y-4">
-    <div class="form-control">
-        <label class="label">
-            <span class="label-text">Decklist URL</span>
-        </label>
-        <input id="url" type="text" @bind="_url" placeholder="Provide a URL to a deck list"
-               class="input input-bordered"/>
+<form @onsubmit="OnScrapeFormSubmit">
+    <div class="mb-5 space-y-4">
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text">Decklist URL</span>
+            </label>
+            <input id="url" type="text" @bind="_url" placeholder="Provide a URL to a deck list"
+                   class="input input-bordered"/>
+        </div>
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text">Scrape Count</span>
+            </label>
+            <input id="scrapeCount" type="number" class="input input-bordered" @bind="_scrapeCount"/>
+        </div>
+        <button class="btn btn-secondary w-full" type="submit">Scrape</button>
     </div>
-    <div class="form-control">
-        <label class="label">
-            <span class="label-text">Scrape Count</span>
-        </label>
-        <input id="scrapeCount" type="number" class="input input-bordered" @bind="_scrapeCount"/>
+</form>
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div>
+        <p class="text-error font-bold">@_errorMessage</p>
     </div>
-    <button class="btn btn-secondary w-full" @onclick="ScrapeDeckList" type="submit">Scrape</button>
-</div>
+}
 
 @if (_deckList.Count > 0)
 {
     <h2 class="text-2xl font-bold mb-5">Scrape Results (@_deckList.Count)</h2>
-
-    @if (!string.IsNullOrEmpty(_errorMessage))
-    {
-        <div>
-            <p class="text-error font-bold">@_errorMessage</p>
-        </div>
-    }
 
     <Grid ModelList="_deckList">
         <GridHeaders>
@@ -71,7 +72,6 @@
 
 @code {
     [Inject] public DeckInfoScraperFactory DeckInfoScraperFactory { get; set; } = null!;
-    [Inject] public IMtgDeckInfoScraperOptions Options { get; set; } = null!;
     [Inject] public CurrentScrapeProvider CurrentScrapeProvider { get; set; } = null!;
 
 
@@ -90,24 +90,38 @@
     }
 
 
-    private async Task ScrapeDeckList()
+    private async Task OnScrapeFormSubmit()
     {
+        _errorMessage = string.Empty;
+
         if (string.IsNullOrEmpty(_url))
         {
+            _errorMessage = "Please enter a URL to scrape";
+            StateHasChanged();
             return;
         }
 
         Console.WriteLine($"Scraping deck list {_url}");
-        var scraper = DeckInfoScraperFactory.Create(SupportedSites.Moxfield);
+        var scraper = DeckInfoScraperFactory.Create(_url);
 
         try
         {
             _deckList = await scraper.ScrapeDeckList(_url, _scrapeCount);
             await CurrentScrapeProvider.SetCurrentScrape(_deckList);
         }
+        catch (PlaywrightException playwrightException)
+        {
+            if (playwrightException.Message.Contains("CONNREFUSED"))
+            {
+                _errorMessage = "Could not connect to Chrome for scraping. Have you started it?";
+                return;
+            }
+
+            _errorMessage = $"An exception occurred in the scraping engine: {playwrightException.Message}";
+        }
         catch (Exception e)
         {
-            _errorMessage = e.Message;
+            _errorMessage = $"An unknown exception occurred: {e.Message}";
         }
     }
 

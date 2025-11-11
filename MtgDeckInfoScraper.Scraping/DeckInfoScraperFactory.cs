@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using MtgDeckInfoScraper.Scraping.Abstractions;
+using MtgDeckInfoScraper.Scraping.Archidekt;
 using MtgDeckInfoScraper.Scraping.Moxfield;
 
 namespace MtgDeckInfoScraper.Scraping;
@@ -14,17 +14,15 @@ public class DeckInfoScraperFactory
         _serviceProvider = serviceProvider;
     }
 
-    public IDeckInfoScraper Create(SupportedSites site)
+    public IDeckInfoScraper Create(string deckUrl)
     {
-        return site switch
+        var host = new Uri(deckUrl).Host.ToLowerInvariant();
+
+        return host switch
         {
-            SupportedSites.Moxfield => _serviceProvider.GetRequiredService<MoxfieldDeckInfoScraper>(),
-            _ => throw new NotImplementedException()
+            "www.moxfield.com" or "moxfield.com" => _serviceProvider.GetRequiredService<MoxfieldDeckInfoScraper>(),
+            "www.archidekt.com" or "archidekt.com" => _serviceProvider.GetRequiredService<ArchidektDeckInfoScraper>(),
+            _ => throw new NotImplementedException($"No scraper implemented for site: {host}")
         };
     }
-}
-
-public enum SupportedSites
-{
-    Moxfield
 }

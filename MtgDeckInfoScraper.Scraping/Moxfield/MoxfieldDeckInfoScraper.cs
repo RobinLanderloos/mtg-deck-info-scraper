@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using MtgDeckInfoScraper.Scraping.Abstractions;
@@ -11,12 +12,14 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
 {
 	private readonly ILogger<MoxfieldDeckInfoScraper> _logger;
 	private readonly IMtgDeckInfoScraperOptions _options;
+	private readonly SemaphoreSlim _scrapeSemaphore;
 
 	public MoxfieldDeckInfoScraper(ILogger<MoxfieldDeckInfoScraper> logger,
 		IMtgDeckInfoScraperOptions options)
 	{
 		_logger = logger;
 		_options = options;
+		_scrapeSemaphore = new SemaphoreSlim(options.MoxfieldMaxConcurrentScrapes, options.MoxfieldMaxConcurrentScrapes);
 	}
 
 
@@ -41,40 +44,26 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
 		_logger.LogDebug("Retrieved {DeckLinkCount} deck links", deckLinks.Count);
 
 		var toCheck = count > deckLinks.Count ? deckLinks : deckLinks.Take(count);
-		var deckList = new List<DeckInfo>();
 
-		var chunkCount = 0;
-		var deckCount = 0;
-		foreach (var deckLinkChunk in toCheck.Chunk(5))
+		var scrapeTasks = toCheck.Select(async link =>
 		{
-			chunkCount++;
-			_logger.LogDebug("Processing chunk {ChunkNumber}", chunkCount);
-
-			var scrapeTasks = new List<Task>();
-			foreach (var deckLink in deckLinkChunk)
+			await _scrapeSemaphore.WaitAsync();
+			try
 			{
-				deckCount++;
-				var currentDeckCount = deckCount;
-				_logger.LogDebug("Starting scrape for deck {DeckNumber}: {DeckLink}", currentDeckCount, deckLink);
-
-				scrapeTasks.Add(Task.Run(async () =>
-				{
-					var info = await NavigateToAndScrapeDeckInfo(existingBrowserContext, deckLink);
-					_logger.LogDebug("Scraped deck info for {DeckNumber}: {DeckInfo}", currentDeckCount, info);
-					lock (deckList)
-					{
-						deckList.Add(info);
-					}
-				}));
+				var info = await NavigateToAndScrapeDeckInfo(existingBrowserContext, link);
+				return info;
 			}
-			await Task.WhenAll(scrapeTasks);
+			finally
+			{
+				_scrapeSemaphore.Release();
+			}
+		});
 
-			// Rate limit our requests a bit to avoid getting blocked
-			await Task.Delay(2000);
-		}
+		var infos = (await Task.WhenAll(scrapeTasks)).ToList();
 
-		_logger.LogInformation("Completed scraping. Total decks scraped: {TotalDecks}", deckList.Count);
-		return deckList;
+
+		_logger.LogInformation("Completed scraping. Total decks scraped: {TotalDecks}", infos.Count);
+		return infos;
 	}
 
 
@@ -90,19 +79,14 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
 		await page.WaitForSelectorAsync("section[class='deckview']");
 
 		var title = await ScrapeDeckTitle(page);
-		_logger.LogDebug("Deck title scraped: {Title}", title);
 
 		var price = await ScrapeDeckPrice(page);
-		_logger.LogDebug("Deck price scraped: {Price}", price);
 
 		var lastUpdated = await ScrapeLastUpdated(page);
-		_logger.LogDebug("Last updated timestamp scraped: {LastUpdated}", lastUpdated);
 
 		var likes = await ScrapeLikes(page);
-		_logger.LogDebug("Deck likes scraped: {Likes}", likes);
 
 		var views = await ScrapeViews(page);
-		_logger.LogDebug("Deck views scraped: {Views}", views);
 
 		await page.CloseAsync();
 
@@ -117,13 +101,11 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
 	{
 		_logger.LogInformation("Scraping deck links from URL: {DeckListUrl}", deckListUrl);
 
-		using var playwright = await Playwright.CreateAsync();
-
 		var page = await browserContext.NewPageAsync();
 		await page.GotoAsync(deckListUrl);
 
 		await page.WaitForSelectorAsync("div[class='browse-ad-layout']");
-		_logger.LogInformation("Waiting for deck list to load");
+		_logger.LogDebug("Waiting for deck list to load");
 
 		var links = await page.QuerySelectorAllAsync("a[href*='/decks/']");
 		var hrefs = await Task.WhenAll(links.Select(async link => await link.GetAttributeAsync("href")));
@@ -190,24 +172,29 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
 		_logger.LogInformation("Scraping deck price...");
 		try
 		{
-			// Ugly code, refactor later
-			var priceText = await SafeScrape(page, "span[id='shoppingcart']", "price", "$0");
-			char symbol = '$';
-			double price = 0;
+			var priceElement = await page.QuerySelectorAsync("span[id='shoppingcart']");
+			await priceElement!.HoverAsync();
 
-			if (priceText.Contains('$'))
+			await page.WaitForSelectorAsync(".tooltip.show", new PageWaitForSelectorOptions()
 			{
-				var dollarIndex = priceText.IndexOf('$');
-				var priceSubstring = priceText.Substring(dollarIndex + 1).Trim();
-				price = Convert.ToDouble(priceSubstring, new CultureInfo("en-US"));
-				symbol = '$';
+				State = WaitForSelectorState.Visible
+			});
+
+			var tooltipText = await page.EvalOnSelectorAsync<string>(".tooltip.show", @"el => el.innerText");
+
+			var match = Regex.Match(tooltipText, @"With any printings:\s*([€$])([\d.,]+)");
+			if (!match.Success)
+			{
+				return ('€', 0);
 			}
-			else if (priceText.Contains("\u20ac")) // Euro symbol
+
+			var symbol = match.Groups[1].Value[0];
+			var priceString = match.Groups[2].Value.Replace(",", "");
+			if (!double.TryParse(priceString, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture,
+				    out var price))
 			{
-				var euroIndex = priceText.IndexOf('\u20ac');
-				var priceSubstring = priceText.Substring(euroIndex + 1).Trim();
-				price = Convert.ToDouble(priceSubstring, new CultureInfo("en-US"));
-				symbol = '\u20ac';
+				_logger.LogWarning("Failed to parse price string: {PriceString}. Returning default value of 0.", priceString);
+				return (symbol, 0);
 			}
 
 			_logger.LogDebug("Scraped price: {Symbol}{Price}", symbol, price);

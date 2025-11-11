@@ -36,6 +36,28 @@
         @bind="Options.ChromeUserDataProfileName"/>
 </div>
 
+<div class="form-control mb-4">
+    <label class="label">
+        <span class="label-text">Moxfield Max Concurrent Scrapes</span>
+    </label>
+    <input
+        id="moxfieldConcurrency"
+        type="number"
+        class="toggle toggle-primary"
+        @bind="Options.MoxfieldMaxConcurrentScrapes"/>
+</div>
+
+<div class="form-control mb-4">
+    <label class="label">
+        <span class="label-text">Archidekt Max Concurrent Scrapes</span>
+    </label>
+    <input
+        id="archidektConcurrency"
+        type="number"
+        class="toggle toggle-primary"
+        @bind="Options.ArchidektMaxConcurrentScrapes"/>
+</div>
+
 @code {
     [Inject] public IMtgDeckInfoScraperOptions Options { get; set; } = null!;
 }

@@ -1,4 +1,7 @@
-﻿namespace MtgDeckInfoScraper.App;
+﻿using Microsoft.Maui;
+using Microsoft.Maui.Controls;
+
+namespace MtgDeckInfoScraper.App;
 
 public partial class App : Application
 {
