@@ -1,7 +1,11 @@
 {
   "plan_file": "plan-favorites-1.md",
-  "current_step_index": 0,
+  "current_step_index": 2,
   "total_steps": 2,
-  "completed": false,
-  "learnings": []
+  "completed": true,
+  "learnings": [
+    "Created FavoritesProvider.cs in MtgDeckInfoScraper.App/LocalStorage/ mirroring CurrentScrapeProvider pattern; uses ILocalStorageAccessor with key 'Favorites' and stores List<DeckInfo>.",
+    "Public API: GetFavoritesAsync() → List<DeckInfo> (null-coalesced to empty list), AddFavoriteAsync(DeckInfo) with Id-based dedup, RemoveFavoriteAsync(Guid), IsFavoriteAsync(Guid) → bool.",
+    "Registered FavoritesProvider as Scoped in MauiProgram.RegisterLocalStorageAccess alongside CurrentScrapeProvider."
+  ]
 }
