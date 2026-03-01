@@ -1,8 +1,13 @@
 {
   "plan_file": "plan-2.md",
-  "current_step_index": 2,
+  "current_step_index": 4,
   "total_steps": 4,
-  "completed": false,
+  "completed": true,
   "stack": ".NET, Blazor, Tailwind CSS + DaisyUI",
-  "learnings": []
+  "learnings": [
+    "Introduced `BaseDeckInfoScraper` in `MtgDeckInfoScraper.Scraping/Base/BaseDeckInfoScraper.cs` implementing `IDeckInfoScraper` with shared helpers: `WithBrowserContextAsync<T>` (Playwright + CDP), `ScrapeWithSemaphoreAsync<T>` (semaphore guard), and `ScrapeDeckListWithMaxCostAsync` (sequential filtered-scraping loop).",
+    "Migrated `MoxfieldDeckInfoScraper` to extend `BaseDeckInfoScraper`; removed duplicated Playwright setup, semaphore construction, and sequential max-cost loop; retained only Moxfield-specific CSS selector / parsing logic.",
+    "Migrated `ArchidektDeckInfoScraper` to extend `BaseDeckInfoScraper`; same deduplication applied, retaining only Archidekt-specific parsing code.",
+    "`MtgDeckInfoScraper.Scraping` builds with 0 errors and 0 warnings confirming all existing behaviour is preserved."
+  ]
 }
