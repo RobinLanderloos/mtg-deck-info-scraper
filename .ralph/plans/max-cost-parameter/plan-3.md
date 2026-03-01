@@ -1,19 +1,20 @@
-# Plan 3 — Add `maxCost` to `ArchidektDeckInfoScraper`
+# Plan 4 — Add `maxCost` input to the Blazor UI
 
 ## Problem
-After plan-2's refactoring, `ArchidektDeckInfoScraper` still needs to honour the `maxCost`
-parameter introduced to the interface in plan-1.
+The scrape form only exposes `URL` and `Scrape Count`. The new `maxCost` parameter must be
+surfaced as an optional numeric input following local UI conventions (DaisyUI / Tailwind).
 
 ## Approach
-Leverage the `ScrapeDeckListWithMaxCostAsync` helper from `BaseDeckInfoScraper` (introduced in
-plan-2) to add the sequential filtered-scraping behaviour to the Archidekt scraper, exactly
-mirroring the Moxfield implementation from plan-1 — but now without code duplication.
+- Add a nullable `double? _maxCost` field.
+- Add a `form-control` block with a `Max Cost` label and a number input bound to `_maxCost`,
+  positioned after the `Scrape Count` control.
+- Pass `_maxCost` to `scraper.ScrapeDeckList`.
 
 ## Files changed (1)
-1. `MtgDeckInfoScraper.Scraping/Archidekt/ArchidektDeckInfoScraper.cs`
+1. `MtgDeckInfoScraper.App/Components/Pages/MoxfieldScraping.razor`
 
 ## Steps
-1. Update `ScrapeDeckList` signature to include `double? maxCost = null`.
-2. Call `ScrapeDeckListWithMaxCostAsync` from the base class when `maxCost != null`.
-3. Retain existing concurrent batch path when `maxCost == null`.
-4. Ensure null-safety (existing null-filter on results) is preserved in both paths.
+1. Add `private double? _maxCost;` field in the `@code` block.
+2. Insert a new `form-control` div (label "Max Cost", placeholder "Optional — leave blank for no limit")
+   after the existing `scrapeCount` control.
+3. Update the `ScrapeDeckList` call: `scraper.ScrapeDeckList(_url, _scrapeCount, _maxCost)`.

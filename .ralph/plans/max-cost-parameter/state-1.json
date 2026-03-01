@@ -1,7 +1,7 @@
 {
   "plan_file": "plan-1.md",
-  "current_step_index": 0,
-  "total_steps": 3,
+  "current_step_index": 1,
+  "total_steps": 4,
   "completed": false,
   "stack": ".NET, Blazor, Tailwind CSS + DaisyUI",
   "learnings": []
