@@ -2,106 +2,56 @@
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
-using MtgDeckInfoScraper.Scraping.Abstractions;
+using MtgDeckInfoScraper.Scraping.Base;
 using MtgDeckInfoScraper.Scraping.Models;
 using MtgDeckInfoScraper.Scraping.Options;
 
 namespace MtgDeckInfoScraper.Scraping.Moxfield;
 
-public class MoxfieldDeckInfoScraper : IDeckInfoScraper
+public class MoxfieldDeckInfoScraper : BaseDeckInfoScraper
 {
-	private readonly ILogger<MoxfieldDeckInfoScraper> _logger;
-	private readonly IMtgDeckInfoScraperOptions _options;
-	private readonly SemaphoreSlim _scrapeSemaphore;
-
 	public MoxfieldDeckInfoScraper(ILogger<MoxfieldDeckInfoScraper> logger,
 		IMtgDeckInfoScraperOptions options)
+		: base(logger, options, options.MoxfieldMaxConcurrentScrapes)
 	{
-		_logger = logger;
-		_options = options;
-		_scrapeSemaphore = new SemaphoreSlim(options.MoxfieldMaxConcurrentScrapes, options.MoxfieldMaxConcurrentScrapes);
 	}
 
-
-	public async Task<List<DeckInfo>> ScrapeDeckList(string deckListUrl,
+	public override async Task<List<DeckInfo>> ScrapeDeckList(string deckListUrl,
 		int count = 10,
 		double? maxCost = null)
 	{
-		using var playwright = await Playwright.CreateAsync();
-		_logger.LogDebug("Playwright instance created.");
-
-		await using var browser = await playwright.Chromium.ConnectOverCDPAsync(
-			$"http://localhost:{_options.ChromeRemoteDebuggingPort}", new()
-			{
-				SlowMo = 1000,
-			});
-
-		_logger.LogInformation("Starting to scrape deck list from URL: {DeckListUrl} with count: {Count}", deckListUrl,
-			count);
-
-		var existingBrowserContext = browser.Contexts[0];
-
-		var deckLinks = await ScrapeDeckLinks(existingBrowserContext, deckListUrl);
-		_logger.LogDebug("Retrieved {DeckLinkCount} deck links", deckLinks.Count);
-
-		if (maxCost is null)
+		return await WithBrowserContextAsync(async browserContext =>
 		{
-			var toCheck = count > deckLinks.Count ? deckLinks : deckLinks.Take(count);
+			Logger.LogInformation("Starting to scrape deck list from URL: {DeckListUrl} with count: {Count}",
+				deckListUrl, count);
 
-			var scrapeTasks = toCheck.Select(async link =>
+			var deckLinks = await ScrapeDeckLinks(browserContext, deckListUrl);
+			Logger.LogDebug("Retrieved {DeckLinkCount} deck links", deckLinks.Count);
+
+			if (maxCost is null)
 			{
-				await _scrapeSemaphore.WaitAsync();
-				try
-				{
-					var info = await NavigateToAndScrapeDeckInfo(existingBrowserContext, link);
-					return info;
-				}
-				finally
-				{
-					_scrapeSemaphore.Release();
-				}
-			});
+				var toCheck = count > deckLinks.Count ? deckLinks : deckLinks.Take(count);
 
-			var infos = (await Task.WhenAll(scrapeTasks)).ToList();
+				var scrapeTasks = toCheck.Select(link =>
+					ScrapeWithSemaphoreAsync(() => NavigateToAndScrapeDeckInfoAsync(browserContext, link)));
 
-			_logger.LogInformation("Completed scraping. Total decks scraped: {TotalDecks}", infos.Count);
-			return infos;
-		}
-		else
-		{
-			var results = new List<DeckInfo>();
-			foreach (var link in deckLinks)
-			{
-				if (results.Count >= count) break;
+				var infos = (await Task.WhenAll(scrapeTasks)).ToList();
 
-				await _scrapeSemaphore.WaitAsync();
-				DeckInfo info;
-				try
-				{
-					info = await NavigateToAndScrapeDeckInfo(existingBrowserContext, link);
-				}
-				finally
-				{
-					_scrapeSemaphore.Release();
-				}
-
-				if (info.Price <= maxCost)
-					results.Add(info);
+				Logger.LogInformation("Completed scraping. Total decks scraped: {TotalDecks}", infos.Count);
+				return infos;
 			}
 
-			_logger.LogInformation("Completed scraping with maxCost filter. Total decks scraped: {TotalDecks}", results.Count);
-			return results;
-		}
+			return await ScrapeDeckListWithMaxCostAsync(browserContext, deckLinks, count, maxCost.Value);
+		});
 	}
 
-
-	private async Task<DeckInfo> NavigateToAndScrapeDeckInfo(IBrowserContext browserContext,
+	protected override async Task<DeckInfo> NavigateToAndScrapeDeckInfoAsync(IBrowserContext browserContext,
 		string deckUrl)
 	{
-		_logger.LogInformation("Navigating to deck URL: {DeckUrl}", deckUrl);
+		Logger.LogInformation("Navigating to deck URL: {DeckUrl}", deckUrl);
 
 		var page = await browserContext.NewPageAsync();
-		_logger.LogInformation("Navigating to the URL: {DeckUrl}", deckUrl);
+		Logger.LogInformation("Navigating to the URL: {DeckUrl}", deckUrl);
 		await page.GotoAsync(deckUrl);
 
 		await page.WaitForSelectorAsync("section[class='deckview']");
@@ -119,7 +69,7 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
 		await page.CloseAsync();
 
 		var deckInfo = new DeckInfo(title, deckUrl, price.Item1, price.Item2, lastUpdated, likes, views);
-		_logger.LogDebug("Constructed DeckInfo object: {DeckInfo}", deckInfo);
+		Logger.LogDebug("Constructed DeckInfo object: {DeckInfo}", deckInfo);
 
 		return deckInfo;
 	}
@@ -127,13 +77,13 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
 	private async Task<List<string>> ScrapeDeckLinks(IBrowserContext browserContext,
 		string deckListUrl)
 	{
-		_logger.LogInformation("Scraping deck links from URL: {DeckListUrl}", deckListUrl);
+		Logger.LogInformation("Scraping deck links from URL: {DeckListUrl}", deckListUrl);
 
 		var page = await browserContext.NewPageAsync();
 		await page.GotoAsync(deckListUrl);
 
 		await page.WaitForSelectorAsync("div[class='browse-ad-layout']");
-		_logger.LogDebug("Waiting for deck list to load");
+		Logger.LogDebug("Waiting for deck list to load");
 
 		var links = await page.QuerySelectorAllAsync("a[href*='/decks/']");
 		var hrefs = await Task.WhenAll(links.Select(async link => await link.GetAttributeAsync("href")));
@@ -150,7 +100,7 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
 
 		await page.CloseAsync();
 
-		_logger.LogInformation("Retrieved {ValidLinkCount} valid deck links", validLinks.Count);
+		Logger.LogInformation("Retrieved {ValidLinkCount} valid deck links", validLinks.Count);
 		return validLinks;
 	}
 
@@ -189,7 +139,7 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
 		}
 		catch (Exception ex)
 		{
-			_logger.LogWarning(ex, "Failed to scrape {FieldName}. Returning default value: {DefaultValue}", fieldName,
+			Logger.LogWarning(ex, "Failed to scrape {FieldName}. Returning default value: {DefaultValue}", fieldName,
 				defaultValue);
 			return defaultValue;
 		}
@@ -197,7 +147,7 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
 
 	private async Task<(char, double)> ScrapeDeckPrice(IPage page)
 	{
-		_logger.LogInformation("Scraping deck price...");
+		Logger.LogInformation("Scraping deck price...");
 		try
 		{
 			var priceElement = await page.QuerySelectorAsync("span[id='shoppingcart']");
@@ -221,17 +171,17 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
 			if (!double.TryParse(priceString, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture,
 				    out var price))
 			{
-				_logger.LogWarning("Failed to parse price string: {PriceString}. Returning default value of 0.", priceString);
+				Logger.LogWarning("Failed to parse price string: {PriceString}. Returning default value of 0.", priceString);
 				return (symbol, 0);
 			}
 
-			_logger.LogDebug("Scraped price: {Symbol}{Price}", symbol, price);
+			Logger.LogDebug("Scraped price: {Symbol}{Price}", symbol, price);
 
 			return (symbol, price);
 		}
 		catch (Exception ex)
 		{
-			_logger.LogWarning(ex, "Failed to scrape deck price. Returning default value of 0.");
+			Logger.LogWarning(ex, "Failed to scrape deck price. Returning default value of 0.");
 			return ('$', 0);
 		}
 	}

@@ -2,105 +2,58 @@
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
-using MtgDeckInfoScraper.Scraping.Abstractions;
+using MtgDeckInfoScraper.Scraping.Base;
 using MtgDeckInfoScraper.Scraping.Models;
 using MtgDeckInfoScraper.Scraping.Options;
 
 namespace MtgDeckInfoScraper.Scraping.Archidekt;
 
-public class ArchidektDeckInfoScraper : IDeckInfoScraper
+public class ArchidektDeckInfoScraper : BaseDeckInfoScraper
 {
-	private readonly SemaphoreSlim _scrapeSemaphore;
-	private readonly ILogger<ArchidektDeckInfoScraper> _logger;
-	private readonly IMtgDeckInfoScraperOptions _options;
-
 	public ArchidektDeckInfoScraper(ILogger<ArchidektDeckInfoScraper> logger,
 		IMtgDeckInfoScraperOptions options)
+		: base(logger, options, options.ArchidektMaxConcurrentScrapes)
 	{
-		_logger = logger;
-		_options = options;
-		_scrapeSemaphore = new SemaphoreSlim(options.ArchidektMaxConcurrentScrapes, options.ArchidektMaxConcurrentScrapes);
 	}
 
-	public async Task<List<DeckInfo>> ScrapeDeckList(string deckListUrl,
+	public override async Task<List<DeckInfo>> ScrapeDeckList(string deckListUrl,
 		int count = 10,
 		double? maxCost = null)
 	{
-		using var playwright = await Playwright.CreateAsync();
-		_logger.LogDebug("Playwright instance created.");
-
-		await using var browser = await playwright.Chromium.ConnectOverCDPAsync(
-			$"http://localhost:{_options.ChromeRemoteDebuggingPort}", new()
-			{
-				SlowMo = 1000,
-			});
-
-		_logger.LogInformation("Starting to scrape deck list from URL: {DeckListUrl} with count: {Count}", deckListUrl, count);
-
-		var existingBrowserContext = browser.Contexts[0];
-
-		var deckLinks = await ScrapeDeckLinks(existingBrowserContext, deckListUrl);
-
-		if (maxCost is null)
+		return await WithBrowserContextAsync(async browserContext =>
 		{
-			var scrapeTasks = deckLinks.Take(count).Select(async link =>
+			Logger.LogInformation("Starting to scrape deck list from URL: {DeckListUrl} with count: {Count}", deckListUrl, count);
+
+			var deckLinks = await ScrapeDeckLinks(browserContext, deckListUrl);
+
+			if (maxCost is null)
 			{
-				await _scrapeSemaphore.WaitAsync();
-				try
+				var scrapeTasks = deckLinks.Take(count).Select(async link =>
 				{
-					var info = await NavigateToAndScrapeDeckInfo(existingBrowserContext, link);
-					return info;
-				}
-				catch (Exception)
-				{
-					return null;
-				}
-				finally
-				{
-					_scrapeSemaphore.Release();
-				}
-			});
+					try
+					{
+						return (DeckInfo?)await ScrapeWithSemaphoreAsync(() => NavigateToAndScrapeDeckInfoAsync(browserContext, link));
+					}
+					catch (Exception)
+					{
+						return null;
+					}
+				});
 
-			var infos = (await Task.WhenAll(scrapeTasks)).Where(x => x is not null).ToList();
+				var infos = (await Task.WhenAll(scrapeTasks)).Where(x => x is not null).Cast<DeckInfo>().ToList();
 
-			_logger.LogInformation("Completed scraping. Total decks scraped: {TotalDecks}", infos.Count);
-			return infos!;
-		}
-		else
-		{
-			var results = new List<DeckInfo>();
-			foreach (var link in deckLinks)
-			{
-				if (results.Count >= count) break;
-
-				await _scrapeSemaphore.WaitAsync();
-				DeckInfo? info = null;
-				try
-				{
-					info = await NavigateToAndScrapeDeckInfo(existingBrowserContext, link);
-				}
-				catch (Exception)
-				{
-					// skip failed scrapes
-				}
-				finally
-				{
-					_scrapeSemaphore.Release();
-				}
-
-				if (info is not null && info.Price <= maxCost)
-					results.Add(info);
+				Logger.LogInformation("Completed scraping. Total decks scraped: {TotalDecks}", infos.Count);
+				return infos;
 			}
 
-			_logger.LogInformation("Completed scraping with maxCost filter. Total decks scraped: {TotalDecks}", results.Count);
-			return results;
-		}
+			return await ScrapeDeckListWithMaxCostAsync(browserContext, deckLinks, count, maxCost.Value);
+		});
 	}
 
-	private async Task<DeckInfo> NavigateToAndScrapeDeckInfo(IBrowserContext existingBrowserContext,
+	protected override async Task<DeckInfo> NavigateToAndScrapeDeckInfoAsync(IBrowserContext browserContext,
 		string link)
 	{
-		var page = await existingBrowserContext.NewPageAsync();
+		var page = await browserContext.NewPageAsync();
 
 		try
 		{
@@ -122,7 +75,7 @@ public class ArchidektDeckInfoScraper : IDeckInfoScraper
 			var match = Regex.Match(tooltipText, @"Any printings:\s*([\d,.]+)\s([€$])");
 			if (!match.Success)
 			{
-				_logger.LogWarning("Could not find price information in tooltip for deck: {DeckLink}", link);
+				Logger.LogWarning("Could not find price information in tooltip for deck: {DeckLink}", link);
 				throw new InvalidOperationException($"Could not find price information in tooltip for deck: {link}");
 			}
 
@@ -130,7 +83,7 @@ public class ArchidektDeckInfoScraper : IDeckInfoScraper
 			var currencySymbol = match.Groups[2].Value[0];
 			if (!double.TryParse(priceString, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var price))
 			{
-				_logger.LogWarning("Could not parse price value '{PriceString}' for deck: {DeckLink}", priceString, link);
+				Logger.LogWarning("Could not parse price value '{PriceString}' for deck: {DeckLink}", priceString, link);
 				throw new InvalidOperationException($"Could not parse price value '{priceString}' for deck: {link}");
 			}
 
@@ -171,7 +124,7 @@ public class ArchidektDeckInfoScraper : IDeckInfoScraper
 		}
 		catch (Exception ex)
 		{
-			_logger.LogError("Error scraping deck info from link: {DeckLink}. Exception: {ExceptionMessage}", link, ex.Message);
+			Logger.LogError("Error scraping deck info from link: {DeckLink}. Exception: {ExceptionMessage}", link, ex.Message);
 			throw;
 		}
 		finally
@@ -191,7 +144,7 @@ public class ArchidektDeckInfoScraper : IDeckInfoScraper
 
 		await page.CloseAsync();
 
-		_logger.LogDebug("Scraped {DeckLinkCount} deck links", hrefs.Length);
+		Logger.LogDebug("Scraped {DeckLinkCount} deck links", hrefs.Length);
 		return hrefs.Where(href => !string.IsNullOrEmpty(href)).Select(href => "https://archidekt.com" + href).ToList();
 	}
 }
