@@ -1,4 +1,6 @@
 ﻿using Blazored.LocalStorage;
+using MtgDeckInfoScraper.App.LocalStorage;
+using MtgDeckInfoScraper.Scraping.LocalStorage;
 
 namespace MtgDeckInfoScraper.App.LocalStorage;
 

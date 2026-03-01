@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using MtgDeckInfoScraper.App.LocalStorage;
 using MtgDeckInfoScraper.App.Preferences;
 using MtgDeckInfoScraper.Scraping;
+using MtgDeckInfoScraper.Scraping.LocalStorage;
 using MtgDeckInfoScraper.Scraping.Moxfield;
 using MtgDeckInfoScraper.Scraping.Options;
 

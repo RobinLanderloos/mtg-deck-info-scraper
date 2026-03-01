@@ -1,6 +1,6 @@
 using MtgDeckInfoScraper.Scraping.Models;
 
-namespace MtgDeckInfoScraper.App.LocalStorage;
+namespace MtgDeckInfoScraper.Scraping.LocalStorage;
 
 public class FavoritesProvider(ILocalStorageAccessor localStorageAccessor)
 {

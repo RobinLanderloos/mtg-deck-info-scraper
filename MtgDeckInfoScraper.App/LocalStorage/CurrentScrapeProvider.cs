@@ -1,4 +1,5 @@
-﻿using MtgDeckInfoScraper.Scraping.Models;
+﻿using MtgDeckInfoScraper.Scraping.LocalStorage;
+using MtgDeckInfoScraper.Scraping.Models;
 
 namespace MtgDeckInfoScraper.App.LocalStorage;
 

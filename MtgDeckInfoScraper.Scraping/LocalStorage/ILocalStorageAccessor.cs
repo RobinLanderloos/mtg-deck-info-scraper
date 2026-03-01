@@ -1,4 +1,4 @@
-﻿namespace MtgDeckInfoScraper.App.LocalStorage;
+namespace MtgDeckInfoScraper.Scraping.LocalStorage;
 
 public interface ILocalStorageAccessor
 {
