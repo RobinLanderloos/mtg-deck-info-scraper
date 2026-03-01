@@ -47,6 +47,7 @@ public static class MauiProgram
         services.AddBlazoredLocalStorage();
         services.AddScoped<ILocalStorageAccessor, BlazoredLocalStorageAccessor>();
         services.AddScoped<CurrentScrapeProvider>();
+        services.AddScoped<FavoritesProvider>();
         return services;
     }
 }
