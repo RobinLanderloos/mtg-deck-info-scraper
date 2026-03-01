@@ -1,0 +1,65 @@
+@page "/Favorites"
+@using System.Globalization
+@using MtgDeckInfoScraper.App.LocalStorage
+@using MtgDeckInfoScraper.Scraping.Models
+
+<PageHeader Title="Favorites"/>
+
+@if (_deckList.Count == 0)
+{
+    <p class="text-base-content opacity-60">No favorites yet.</p>
+}
+else
+{
+    <Grid ModelList="_deckList">
+        <GridHeaders>
+            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Title)" Sortable="@true">
+            </GridHeader>
+            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Price)" Sortable="@true">
+            </GridHeader>
+            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Likes)" Sortable="@true">
+            </GridHeader>
+            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.Views)" Sortable="@true">
+            </GridHeader>
+            <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.LastUpdated)">
+            </GridHeader>
+            <GridHeader TModel="DeckInfo" PropertyName="">
+            </GridHeader>
+        </GridHeaders>
+        <GridRowTemplate>
+            <td>
+                <a href="@context.Url" target="_blank" class="hover:underline text-primary">
+                    <span class="mr-2">
+                        @context.Title
+                    </span>
+                    <i class="fa-solid fa-link"></i>
+                </a>
+            </td>
+            <td>
+                @context.PriceSymbol
+                @context.Price.ToString(CultureInfo.InvariantCulture)
+            </td>
+            <td>@context.Likes.ToString()</td>
+            <td>@context.Views.ToString()</td>
+            <td>@context.LastUpdated</td>
+            <td><FavoriteButton Deck="@context" OnUnfavorited="OnUnfavorited"/></td>
+        </GridRowTemplate>
+    </Grid>
+}
+
+@code {
+    [Inject] public FavoritesProvider FavoritesProvider { get; set; } = null!;
+
+    private List<DeckInfo> _deckList = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _deckList = await FavoritesProvider.GetFavoritesAsync();
+    }
+
+    private void OnUnfavorited(DeckInfo deck)
+    {
+        _deckList.Remove(deck);
+        StateHasChanged();
+    }
+}

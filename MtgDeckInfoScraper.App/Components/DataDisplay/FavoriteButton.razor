@@ -14,6 +14,7 @@
 
 @code {
     [Parameter, EditorRequired] public DeckInfo Deck { get; set; } = null!;
+    [Parameter] public EventCallback<DeckInfo> OnUnfavorited { get; set; }
     [Inject] public FavoritesProvider FavoritesProvider { get; set; } = null!;
 
     private bool _isFavorite;
@@ -28,6 +29,7 @@
         if (_isFavorite)
         {
             await FavoritesProvider.RemoveFavoriteAsync(Deck.Id);
+            await OnUnfavorited.InvokeAsync(Deck);
         }
         else
         {
