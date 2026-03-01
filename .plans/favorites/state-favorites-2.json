@@ -1,7 +1,10 @@
 {
   "plan_file": "plan-favorites-2.md",
-  "current_step_index": 0,
+  "current_step_index": 2,
   "total_steps": 2,
-  "completed": false,
-  "learnings": []
+  "completed": true,
+  "learnings": [
+    "Created FavoriteButton.razor under Components/DataDisplay/. It accepts a DeckInfo parameter, injects FavoritesProvider, checks IsFavoriteAsync on init, and toggles AddFavoriteAsync/RemoveFavoriteAsync on click while flipping the local _isFavorite bool and calling StateHasChanged().",
+    "Updated MoxfieldScraping.razor: injected FavoritesProvider, added an empty non-sortable GridHeader for the favorites column, and added a <td> with <FavoriteButton Deck='@context'/> in the GridRowTemplate."
+  ]
 }
