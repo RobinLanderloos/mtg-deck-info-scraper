@@ -74,7 +74,7 @@ public class MoxfieldDeckInfoScraper : BaseDeckInfoScraper
 		return deckInfo;
 	}
 
-	private async Task<List<string>> ScrapeDeckLinks(IBrowserContext browserContext,
+	protected virtual async Task<List<string>> ScrapeDeckLinks(IBrowserContext browserContext,
 		string deckListUrl)
 	{
 		Logger.LogInformation("Scraping deck links from URL: {DeckListUrl}", deckListUrl);

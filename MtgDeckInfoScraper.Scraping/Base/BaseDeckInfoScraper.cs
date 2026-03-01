@@ -21,7 +21,7 @@ public abstract class BaseDeckInfoScraper : IDeckInfoScraper
 
 	public abstract Task<List<DeckInfo>> ScrapeDeckList(string deckListUrl, int count = 10, double? maxCost = null);
 
-	protected async Task<T> WithBrowserContextAsync<T>(Func<IBrowserContext, Task<T>> action)
+	protected virtual async Task<T> WithBrowserContextAsync<T>(Func<IBrowserContext, Task<T>> action)
 	{
 		using var playwright = await Playwright.CreateAsync();
 		Logger.LogDebug("Playwright instance created.");

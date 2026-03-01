@@ -133,7 +133,7 @@ public class ArchidektDeckInfoScraper : BaseDeckInfoScraper
 		}
 	}
 
-	private async Task<List<string>> ScrapeDeckLinks(IBrowserContext existingBrowserContext,
+	protected virtual async Task<List<string>> ScrapeDeckLinks(IBrowserContext existingBrowserContext,
 		string deckListUrl)
 	{
 		var page = await existingBrowserContext.NewPageAsync();
