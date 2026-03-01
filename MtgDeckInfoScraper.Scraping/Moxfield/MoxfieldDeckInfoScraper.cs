@@ -24,7 +24,8 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
 
 
 	public async Task<List<DeckInfo>> ScrapeDeckList(string deckListUrl,
-		int count = 10)
+		int count = 10,
+		double? maxCost = null)
 	{
 		using var playwright = await Playwright.CreateAsync();
 		_logger.LogDebug("Playwright instance created.");
@@ -43,27 +44,54 @@ public class MoxfieldDeckInfoScraper : IDeckInfoScraper
 		var deckLinks = await ScrapeDeckLinks(existingBrowserContext, deckListUrl);
 		_logger.LogDebug("Retrieved {DeckLinkCount} deck links", deckLinks.Count);
 
-		var toCheck = count > deckLinks.Count ? deckLinks : deckLinks.Take(count);
-
-		var scrapeTasks = toCheck.Select(async link =>
+		if (maxCost is null)
 		{
-			await _scrapeSemaphore.WaitAsync();
-			try
+			var toCheck = count > deckLinks.Count ? deckLinks : deckLinks.Take(count);
+
+			var scrapeTasks = toCheck.Select(async link =>
 			{
-				var info = await NavigateToAndScrapeDeckInfo(existingBrowserContext, link);
-				return info;
-			}
-			finally
+				await _scrapeSemaphore.WaitAsync();
+				try
+				{
+					var info = await NavigateToAndScrapeDeckInfo(existingBrowserContext, link);
+					return info;
+				}
+				finally
+				{
+					_scrapeSemaphore.Release();
+				}
+			});
+
+			var infos = (await Task.WhenAll(scrapeTasks)).ToList();
+
+			_logger.LogInformation("Completed scraping. Total decks scraped: {TotalDecks}", infos.Count);
+			return infos;
+		}
+		else
+		{
+			var results = new List<DeckInfo>();
+			foreach (var link in deckLinks)
 			{
-				_scrapeSemaphore.Release();
+				if (results.Count >= count) break;
+
+				await _scrapeSemaphore.WaitAsync();
+				DeckInfo info;
+				try
+				{
+					info = await NavigateToAndScrapeDeckInfo(existingBrowserContext, link);
+				}
+				finally
+				{
+					_scrapeSemaphore.Release();
+				}
+
+				if (info.Price <= maxCost)
+					results.Add(info);
 			}
-		});
 
-		var infos = (await Task.WhenAll(scrapeTasks)).ToList();
-
-
-		_logger.LogInformation("Completed scraping. Total decks scraped: {TotalDecks}", infos.Count);
-		return infos;
+			_logger.LogInformation("Completed scraping with maxCost filter. Total decks scraped: {TotalDecks}", results.Count);
+			return results;
+		}
 	}
 
 
