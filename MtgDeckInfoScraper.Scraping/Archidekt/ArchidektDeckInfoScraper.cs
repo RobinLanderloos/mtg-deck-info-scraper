@@ -23,7 +23,8 @@ public class ArchidektDeckInfoScraper : IDeckInfoScraper
 	}
 
 	public async Task<List<DeckInfo>> ScrapeDeckList(string deckListUrl,
-		int count = 10)
+		int count = 10,
+		double? maxCost = null)
 	{
 		using var playwright = await Playwright.CreateAsync();
 		_logger.LogDebug("Playwright instance created.");
@@ -40,27 +41,60 @@ public class ArchidektDeckInfoScraper : IDeckInfoScraper
 
 		var deckLinks = await ScrapeDeckLinks(existingBrowserContext, deckListUrl);
 
-		var scrapeTasks = deckLinks.Take(count).Select(async link =>
+		if (maxCost is null)
 		{
-			await _scrapeSemaphore.WaitAsync();
-			try
+			var scrapeTasks = deckLinks.Take(count).Select(async link =>
 			{
-				var info = await NavigateToAndScrapeDeckInfo(existingBrowserContext, link);
-				return info;
-			}
-			catch (Exception)
-			{
-				return null;
-			}
-			finally
-			{
-				_scrapeSemaphore.Release();
-			}
-		});
+				await _scrapeSemaphore.WaitAsync();
+				try
+				{
+					var info = await NavigateToAndScrapeDeckInfo(existingBrowserContext, link);
+					return info;
+				}
+				catch (Exception)
+				{
+					return null;
+				}
+				finally
+				{
+					_scrapeSemaphore.Release();
+				}
+			});
 
-		var infos = (await Task.WhenAll(scrapeTasks)).Where(x => x is not null).ToList();
+			var infos = (await Task.WhenAll(scrapeTasks)).Where(x => x is not null).ToList();
 
-		return infos!;
+			_logger.LogInformation("Completed scraping. Total decks scraped: {TotalDecks}", infos.Count);
+			return infos!;
+		}
+		else
+		{
+			var results = new List<DeckInfo>();
+			foreach (var link in deckLinks)
+			{
+				if (results.Count >= count) break;
+
+				await _scrapeSemaphore.WaitAsync();
+				DeckInfo? info = null;
+				try
+				{
+					info = await NavigateToAndScrapeDeckInfo(existingBrowserContext, link);
+				}
+				catch (Exception)
+				{
+					// skip failed scrapes
+				}
+				finally
+				{
+					_scrapeSemaphore.Release();
+				}
+
+				if (info is not null && info.Price <= maxCost)
+					results.Add(info);
+			}
+
+			_logger.LogInformation("Completed scraping with maxCost filter. Total decks scraped: {TotalDecks}", results.Count);
+			return results;
+		}
 	}
 
 	private async Task<DeckInfo> NavigateToAndScrapeDeckInfo(IBrowserContext existingBrowserContext,

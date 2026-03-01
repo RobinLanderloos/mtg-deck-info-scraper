@@ -1,0 +1,12 @@
+{
+  "plan_file": "plan-1.md",
+  "current_step_index": 4,
+  "total_steps": 4,
+  "completed": true,
+  "stack": ".NET, Blazor, Tailwind CSS + DaisyUI",
+  "learnings": [
+    "Added `double? maxCost = null` to `IDeckInfoScraper.ScrapeDeckList`.",
+    "In `MoxfieldDeckInfoScraper.ScrapeDeckList`: when `maxCost` is null, uses existing concurrent `Task.WhenAll` with `Take(count)`; when provided, iterates sequentially via the semaphore and collects decks where `price <= maxCost` until `count` results are gathered.",
+    "Applied identical branching logic to `ArchidektDeckInfoScraper.ScrapeDeckList`: null path retains concurrent scraping with null-filtering; non-null path loops sequentially, skips failed scrapes, and filters by price."
+  ]
+}

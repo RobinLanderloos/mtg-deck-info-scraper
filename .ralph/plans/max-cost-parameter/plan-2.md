@@ -12,9 +12,7 @@ Introduce an abstract `BaseDeckInfoScraper` in a new `Base/` folder under `MtgDe
 The base class encapsulates:
 - `ConnectToBrowserAsync()` — creates Playwright + connects over CDP
 - `ScrapeWithSemaphoreAsync<T>(Func<Task<T>>)` — semaphore-guarded execution helper
-- `ScrapeDeckListWithMaxCostAsync(...)` — the sequential filtered-scraping loop (to be used by both
-  implementations after plan-1 lands on Moxfield and plan-3 lands on Archidekt)
-
+- `ScrapeDeckListWithMaxCostAsync(...)` — the sequential filtered-scraping loop 
 Both concrete scrapers are then updated to extend `BaseDeckInfoScraper` and delegate the shared
 logic, keeping only their site-specific CSS selector / parsing code.
 
