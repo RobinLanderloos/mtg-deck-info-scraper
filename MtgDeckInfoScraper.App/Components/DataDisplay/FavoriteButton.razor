@@ -1,0 +1,40 @@
+@using MtgDeckInfoScraper.App.LocalStorage
+@using MtgDeckInfoScraper.Scraping.Models
+
+<button @onclick="ToggleFavorite" class="btn btn-ghost btn-sm">
+    @if (_isFavorite)
+    {
+        <i class="fa-solid fa-heart text-error"></i>
+    }
+    else
+    {
+        <i class="fa-regular fa-heart"></i>
+    }
+</button>
+
+@code {
+    [Parameter, EditorRequired] public DeckInfo Deck { get; set; } = null!;
+    [Inject] public FavoritesProvider FavoritesProvider { get; set; } = null!;
+
+    private bool _isFavorite;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isFavorite = await FavoritesProvider.IsFavoriteAsync(Deck.Id);
+    }
+
+    private async Task ToggleFavorite()
+    {
+        if (_isFavorite)
+        {
+            await FavoritesProvider.RemoveFavoriteAsync(Deck.Id);
+        }
+        else
+        {
+            await FavoritesProvider.AddFavoriteAsync(Deck);
+        }
+
+        _isFavorite = !_isFavorite;
+        StateHasChanged();
+    }
+}
