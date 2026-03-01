@@ -56,6 +56,8 @@
             </GridHeader>
             <GridHeader TModel="DeckInfo" PropertyName="@nameof(DeckInfo.LastUpdated)">
             </GridHeader>
+            <GridHeader TModel="DeckInfo" PropertyName="">
+            </GridHeader>
         </GridHeaders>
         <GridRowTemplate>
             <td>
@@ -73,6 +75,7 @@
             <td>@context.Likes.ToString()</td>
             <td>@context.Views.ToString()</td>
             <td>@context.LastUpdated</td>
+            <td><FavoriteButton Deck="@context"/></td>
         </GridRowTemplate>
     </Grid>
 }
@@ -80,6 +83,7 @@
 @code {
     [Inject] public DeckInfoScraperFactory DeckInfoScraperFactory { get; set; } = null!;
     [Inject] public CurrentScrapeProvider CurrentScrapeProvider { get; set; } = null!;
+    [Inject] public FavoritesProvider FavoritesProvider { get; set; } = null!;
 
 
     private string? _url = "";
