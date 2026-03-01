@@ -1,8 +1,13 @@
 {
   "plan_file": "plan-1.md",
-  "current_step_index": 2,
+  "current_step_index": 3,
   "total_steps": 4,
   "completed": true,
   "stack": ".NET, Blazor, Tailwind CSS + DaisyUI",
-  "learnings": []
+  "learnings": [
+    "Added `double? maxCost = null` parameter to `IDeckInfoScraper.ScrapeDeckList` interface.",
+    "Added `maxCost` branching to `MoxfieldDeckInfoScraper.ScrapeDeckList`: null path keeps existing concurrent Task.WhenAll logic; non-null path delegates to `ScrapeDeckListWithMaxCostAsync`.",
+    "Applied the same `maxCost` branching to `ArchidektDeckInfoScraper.ScrapeDeckList` preserving the null-filter on results in the concurrent path.",
+    "Extracted common sequential max-cost filtering loop into `BaseDeckInfoScraper.ScrapeDeckListWithMaxCostAsync`, which iterates links sequentially, skips failed scrapes, keeps decks whose price <= maxCost, and stops when count is reached."
+  ]
 }

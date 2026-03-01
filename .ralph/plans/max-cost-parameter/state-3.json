@@ -1,8 +1,12 @@
 {
   "plan_file": "plan-3.md",
-  "current_step_index": 1,
+  "current_step_index": 3,
   "total_steps": 3,
-  "completed": false,
+  "completed": true,
   "stack": ".NET, Blazor, Tailwind CSS + DaisyUI",
-  "learnings": []
+  "learnings": [
+    "Added `private double? _maxCost;` field to MoxfieldScraping.razor (was already present from prior work).",
+    "Inserted a new DaisyUI `form-control` div with label 'Max Cost' and a `type=number step=any` input bound to `_maxCost`, placed after the Scrape Count control with placeholder 'Optional — leave blank for no limit'.",
+    "Updated `scraper.ScrapeDeckList(_url, _scrapeCount)` call to `scraper.ScrapeDeckList(_url, _scrapeCount, _maxCost)` so the optional max-cost filter is forwarded to the scraping engine."
+  ]
 }
