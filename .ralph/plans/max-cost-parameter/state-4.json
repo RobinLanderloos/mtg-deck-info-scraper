@@ -1,8 +1,12 @@
 {
   "plan_file": "plan-4.md",
-  "current_step_index": 1,
+  "current_step_index": 5,
   "total_steps": 5,
-  "completed": false,
+  "completed": true,
   "stack": ".NET, xUnit, Moq, GitHub Actions",
-  "learnings": []
+  "learnings": [
+    "Scaffolded `MtgDeckInfoScraper.Tests` xUnit project (net10.0) with xunit, xunit.runner.visualstudio, Microsoft.NET.Test.Sdk, Moq, and coverlet.collector; added project reference to MtgDeckInfoScraper.Scraping and registered it in MtgDeckInfoScraper.sln.",
+    "Added `Unit/BaseDeckInfoScraperTests.cs` with a `TestScraper` subclass that exposes `ScrapeDeckListWithMaxCostAsync` and `ScrapeWithSemaphoreAsync` via public wrappers; tests verify cost filtering, early-stop on count, and semaphore release on exception.",
+    "Added `Integration/MoxfieldDeckInfoScraperTests.cs` and `Integration/ArchidektDeckInfoScraperTests.cs` using test-double subclasses that stub `WithBrowserContextAsync`, `ScrapeDeckLinks`, and `NavigateToAndScrapeDeckInfoAsync`; tests cover the null-maxCost concurrent path (result count capped at `count`) and the non-null maxCost sequential-filter path (only decks <= threshold returned). All 7 tests pass."
+  ]
 }
