@@ -1,7 +1,10 @@
 {
   "plan_file": "plan-favorites-3.md",
-  "current_step_index": 0,
+  "current_step_index": 2,
   "total_steps": 2,
-  "completed": false,
-  "learnings": []
+  "completed": true,
+  "learnings": [
+    "Created Favorites.razor at @page '/Favorites' that injects FavoritesProvider, loads favorites in OnInitializedAsync, shows a 'No favorites yet' message when empty, and renders the same Grid<DeckInfo> column layout as MoxfieldScraping.razor with an OnUnfavorited callback that removes the deck from _deckList immediately.",
+    "Added a Favorites NavMenuLink (fa-solid fa-heart icon, Href='Favorites') to NavMenu.razor between the Settings link and the Start Chrome button."
+  ]
 }
